@@ -14,7 +14,9 @@ func createRoutes() {
 // https://go.dev/doc/articles/wiki/
 
 func run() error {
-	return http.ListenAndServe(":8080", nil)
+	certFile := "tls/tls.crt"
+	keyFile := "tls/tls.key"
+	return http.ListenAndServeTLS(":8443", certFile, keyFile, nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
