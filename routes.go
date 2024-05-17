@@ -13,10 +13,8 @@ func createRoutes() {
 
 // https://go.dev/doc/articles/wiki/
 
-func run() error {
-	certFile := "tls/tls.crt"
-	keyFile := "tls/tls.key"
-	return http.ListenAndServeTLS(":8443", certFile, keyFile, nil)
+func run(tls_key string, tls_cert string) error {
+	return http.ListenAndServeTLS(":8443", tls_cert, tls_key, nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
