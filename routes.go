@@ -2,7 +2,11 @@ package main
 
 import (
 	"net/http"
+	"regexp"
 )
+
+const titleRe = "[a-zA-Z0-9]+"
+var validPath = regexp.MustCompile("^/(edit|save|view)/(" + titleRe + ")$")
 
 func createRoutes() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))

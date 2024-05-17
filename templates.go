@@ -17,9 +17,6 @@ var statics = template.Must(template.ParseFiles("templates/header.html", "templa
 var staticHead bytes.Buffer
 var staticFoot bytes.Buffer
 
-const titleRe = "[a-zA-Z0-9]+"
-var validPath = regexp.MustCompile("^/(edit|save|view)/(" + titleRe + ")$")
-var linkRe = regexp.MustCompile("\\[(" + titleRe + ")\\]")
 func initStaticTemplates() error {
 	//fmt.Println("Loading static templates.")
 	err := statics.ExecuteTemplate(&staticHead, "header.html", nil)
