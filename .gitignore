@@ -1,2 +1,6 @@
 webapp
 tls/
+data/
+_obj/
+cc/
+static/

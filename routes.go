@@ -2,21 +2,28 @@ package main
 
 import (
 	"net/http"
+	"regexp"
 )
+
+const titleRe = "[a-zA-Z0-9]+"
+var validPath = regexp.MustCompile("^/(edit|save|view)/(" + titleRe + ")$")
 
 func createRoutes() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+
+	fs := http.FileServer(http.Dir("static"))
+	t := http.StripPrefix("/static/", fs)
+	http.Handle("/static/", t)
+
 	http.HandleFunc("/", handler)
 }
 
 // https://go.dev/doc/articles/wiki/
 
-func run() error {
-	certFile := "tls/tls.crt"
-	keyFile := "tls/tls.key"
-	return http.ListenAndServeTLS(":8443", certFile, keyFile, nil)
+func run(tls_key string, tls_cert string) error {
+	return http.ListenAndServeTLS(":8443", tls_cert, tls_key, nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
