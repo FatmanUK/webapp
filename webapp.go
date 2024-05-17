@@ -36,7 +36,6 @@ func createTls() {
 func main() {
 	createTls()
 	createRoutes()
-	initStaticTemplates()
 	err := run(TLS_KEY, TLS_CRT)
 	if err != nil {
 		log.Fatal(err)
