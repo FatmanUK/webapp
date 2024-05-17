@@ -12,6 +12,11 @@ func createRoutes() {
 	http.HandleFunc("/view/", makeHandler(viewHandler))
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
+
+	fs := http.FileServer(http.Dir("static"))
+	t := http.StripPrefix("/static/", fs)
+	http.Handle("/static/", t)
+
 	http.HandleFunc("/", handler)
 }
 
