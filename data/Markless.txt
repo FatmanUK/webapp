@@ -66,7 +66,7 @@ Again:
 1. another item 1
 
 ## Imagery
-![A random image from Lorem Picsum](https://picsum.photos/200/200 "Random image from Lorem Picsum")
+![A random image from <https://picsum.photos/>](https://picsum.photos/200/200 "Random image from Lorem Picsum")
 
 ## Super
 Here is some^super^ text.
