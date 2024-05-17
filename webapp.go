@@ -6,12 +6,6 @@ import (
 //	"fatgo/mktls"
 )
 
-// Global vars
-// TODO: set up config class
-var TLS_KEY = "tls/tls.key"
-var TLS_CRT = "tls/tls.crt"
-var webRoot = "/home/adam.richardson/webapp"
-
 func Exists(name string) error {
 	_, err := os.Stat(name)
 	if os.IsNotExist(err) {
@@ -22,21 +16,25 @@ func Exists(name string) error {
 
 func createTls() {
 	// path must exist
-	key_is := (nil == Exists(TLS_KEY))
-	crt_is := (nil == Exists(TLS_CRT))
+	key_is := (nil == Exists(conf.tls.key))
+	crt_is := (nil == Exists(conf.tls.crt))
 	if crt_is && key_is {
 		return
 	}
 	if !key_is {
-		//mktls.CreateKey(TLS_KEY)
+		//mktls.CreateKey(conf.tls.key)
 	}
-	//mktls.CreateCrt(TLS_KEY, TLS_CRT)
+	//mktls.CreateCrt(conf.tls.key, conf.tls.crt)
 }
 
 func main() {
+	if nil == Exists(conf.file) {
+		//makeDefaults() // commented due to bug in Serialiser, uncomment to create cfg file
+	}
+	conf.load()
 	createTls()
 	createRoutes()
-	err := run(TLS_KEY, TLS_CRT)
+	err := run(conf.tls.key, conf.tls.crt)
 	if err != nil {
 		log.Fatal(err)
 	}

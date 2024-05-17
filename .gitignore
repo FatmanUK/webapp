@@ -4,3 +4,4 @@ data/
 _obj/
 cc/
 static/
+webapp.cfg

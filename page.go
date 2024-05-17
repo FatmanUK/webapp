@@ -11,12 +11,12 @@ type Page struct {
 
 func (p *Page) save() error {
 	filename := p.Title + ".txt"
-	return os.WriteFile(webRoot + "/data/" + filename, p.Body, 0600)
+	return os.WriteFile(conf.web.root + filename, p.Body, 0600)
 }
 
 func loadPage(title string) (*Page, error) {
 	filename := title + ".txt"
-	body, err := os.ReadFile(webRoot + "/data/" + filename)
+	body, err := os.ReadFile(conf.web.root + "/" + filename)
 	if err != nil {
 		return nil, err
 	}
