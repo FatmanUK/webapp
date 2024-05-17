@@ -5,29 +5,13 @@ import (
 	"text/template"
 	"regexp"
 	"bytes"
-	"fmt"
 	"bufio"
 	"strings"
 )
 
 // https://go.dev/doc/articles/wiki/
 
-var templates = template.Must(template.ParseFiles("templates/edit.html", "templates/view.html"))
-var statics = template.Must(template.ParseFiles("templates/header.html", "templates/footer.html"))
-var staticHead bytes.Buffer
-var staticFoot bytes.Buffer
-
-func initStaticTemplates() error {
-	//fmt.Println("Loading static templates.")
-	err := statics.ExecuteTemplate(&staticHead, "header.html", nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-	//fmt.Println("HEAD: ", staticHead.String())
-	err = statics.ExecuteTemplate(&staticFoot, "footer.html", nil)
-	return err
-}
+var templates = template.Must(template.ParseFiles("templates/edit.html", "templates/view.html", "templates/header.html", "templates/footer.html"))
 
 // TODO: break up this function.
 // I'm not doing nesting of anything. If you try nesting and it works,
@@ -176,13 +160,7 @@ func markupOutput(o []byte) ([]byte, error) {
 	var ulSmoothRe = regexp.MustCompile(`</ul>\n<ul>`)
 	smoothOs = ulSmoothRe.ReplaceAll(smoothOs, []byte(""))
 
-	// add a header and footer which are not marked up
-	// so we can have actual HTML tags in there
-	var capped bytes.Buffer
-	capped.Write(staticHead.Bytes())
-	capped.Write(smoothOs)
-	capped.Write(staticFoot.Bytes())
-	return capped.Bytes(), err
+	return smoothOs, err
 }
 
 func captureTemplate(tmpl string, p *Page) ([]byte, error) {
@@ -199,8 +177,18 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	if tmpl == "view" {
 		output, err = markupOutput(output)
 	}
+
+	// add a header and footer which are not marked up
+	// so we can have actual HTML tags in there
+	var capped bytes.Buffer
+	sh, err := captureTemplate("header", p)
+	capped.Write(sh)
+	capped.Write(output)
+	sf, err := captureTemplate("footer", p)
+	capped.Write(sf)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	w.Write(output)
+	w.Write(capped.Bytes())
 }
