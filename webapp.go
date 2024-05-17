@@ -10,6 +10,7 @@ import (
 func main() {
 	createRoutes()
 	err := run()
+	initStaticTemplates()
 	if err != nil {
 		log.Fatal(err)
 	}
