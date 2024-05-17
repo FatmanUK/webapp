@@ -7,6 +7,12 @@ import (
 	"log"
 )
 
+// Global vars
+// TODO: set up config class
+var TLS_KEY = "tls/tls.key"
+var TLS_CRT = "tls/tls.crt"
+var webRoot = "/home/adam.richardson/webapp"
+
 func main() {
 	createRoutes()
 	err := run()
