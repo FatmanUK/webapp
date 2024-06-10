@@ -30,14 +30,16 @@ func createTls() {
 var conf = &Config{file: configFile}
 
 func main() {
-	if nil == Exists(conf.file) {
-		//makeDefaults() // commented due to bug in Serialiser, uncomment to create cfg file
-	}
-	conf.load()
-	createTls()
-	createRoutes()
-	err := run(conf.tls.key, conf.tls.crt)
-	if err != nil {
-		log.Fatal(err)
+	if nil != Exists(conf.file) {
+		log.Output(0, "Creating default config, run again.")
+		makeDefaults()
+	} else {
+		conf.load()
+		createTls()
+		createRoutes()
+		err := run(conf.tls.key, conf.tls.crt)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
