@@ -7,6 +7,7 @@ import (
 
 type ConfigWeb struct {
 	root string
+	first_page string
 }
 
 type ConfigTls struct {
@@ -26,10 +27,12 @@ var defaultWebRoot = "data"
 var defaultTlsKey = "tls/tls.key"
 var defaultTlsCrt = "tls/tls.crt"
 var conf = &Config{file: configFile}
+var defaultFirstPage = "FrontPage"
 
 // hmm, set these in build options?
 func makeDefaults() {
 	conf.web.root = defaultWebRoot
+	conf.web.first_page = defaultFirstPage
 	conf.tls.key = defaultTlsKey
 	conf.tls.crt = defaultTlsCrt
 	conf.save()
@@ -37,11 +40,9 @@ func makeDefaults() {
 
 func (re *Config) serialise(s serialisers.Serialiser) {
 	s.IoS(&re.web.root)
-	//fmt.Println("Serialised: ", re.web.root)
+	s.IoS(&re.web.first_page)
 	s.IoS(&re.tls.key)
-	//fmt.Println("Serialised: ", re.tls.key)
 	s.IoS(&re.tls.crt)
-	//fmt.Println("Serialised: ", re.tls.crt)
 }
 
 // strange bug...

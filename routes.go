@@ -27,7 +27,7 @@ func run(tls_key string, tls_cert string) error {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/view/FrontPage", http.StatusFound)
+	http.Redirect(w, r, "/view/" + conf.web.first_page, http.StatusFound)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
