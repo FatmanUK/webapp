@@ -28,7 +28,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	if tmpl == "view" {
 		output, err = markupOutput(output)
 	}
-
 	// add a header and footer which are not marked up
 	// so we can have actual HTML tags in there
 	var capped bytes.Buffer
@@ -37,7 +36,6 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	capped.Write(output)
 	sf, err := captureTemplate("footer", p)
 	capped.Write(sf)
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
