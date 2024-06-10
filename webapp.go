@@ -27,6 +27,8 @@ func createTls() {
 	//mktls.CreateCrt(conf.tls.key, conf.tls.crt)
 }
 
+var conf = &Config{file: configFile}
+
 func main() {
 	if nil == Exists(conf.file) {
 		//makeDefaults() // commented due to bug in Serialiser, uncomment to create cfg file

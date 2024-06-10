@@ -26,7 +26,6 @@ var configFile = "webapp.cfg"
 var defaultWebRoot = "data"
 var defaultTlsKey = "tls/tls.key"
 var defaultTlsCrt = "tls/tls.crt"
-var conf = &Config{file: configFile}
 var defaultFirstPage = "FrontPage"
 
 // hmm, set these in build options?
