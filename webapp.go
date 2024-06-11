@@ -30,6 +30,7 @@ func createTls() {
 var conf = &Config{file: configFile}
 
 func main() {
+	log.Output(0, "Base64'd compile args: " + BUILD_COMMAND_B64)
 	if nil != Exists(conf.file) {
 		log.Output(0, "Creating default config, run again.")
 		makeDefaults()

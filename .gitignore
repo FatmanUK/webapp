@@ -1,7 +1,13 @@
-webapp
+build-*/
+.tup/
+linux
+linuxd
+windows.exe
+windowsd.exe
 tls/
 data/
 _obj/
 cc/
 static/
 webapp.cfg
+notes/
