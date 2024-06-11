@@ -6,7 +6,7 @@ import (
 //	"fatgo/mktls"
 )
 
-func Exists(name string) error {
+func fileExists(name string) error {
 	_, err := os.Stat(name)
 	if os.IsNotExist(err) {
 		return err
@@ -16,8 +16,8 @@ func Exists(name string) error {
 
 func createTls() {
 	// path must exist
-	key_is := (nil == Exists(conf.tls.key))
-	crt_is := (nil == Exists(conf.tls.crt))
+	key_is := (nil == fileExists(c.GetString("tls.key")))
+	crt_is := (nil == fileExists(c.GetString("tls.crt")))
 	if crt_is && key_is {
 		return
 	}
@@ -27,20 +27,35 @@ func createTls() {
 	//mktls.CreateCrt(conf.tls.key, conf.tls.crt)
 }
 
-var conf = &Config{file: configFile}
+// must set these with build options
+var configFile string
+var defaultWebRoot string
+var defaultTlsKey string
+var defaultTlsCrt string
+var defaultFirstPage string
+
+var c = &JsonConfig{
+	configFile,
+	make(map[string]string)}
+
+func defaults() {
+	c.SetString("web.root", defaultWebRoot)
+	c.SetString("web.first_page", defaultFirstPage)
+	c.SetString("tls.key", defaultTlsKey)
+	c.SetString("tls.crt", defaultTlsCrt)
+	if ! c.FileExists() {
+		c.Save()
+	}
+}
 
 func main() {
-	log.Output(0, "Base64'd compile args: " + BUILD_COMMAND_B64)
-	if nil != Exists(conf.file) {
-		log.Output(0, "Creating default config, run again.")
-		makeDefaults()
-	} else {
-		conf.load()
-		createTls()
-		createRoutes()
-		err := run(conf.tls.key, conf.tls.crt)
-		if err != nil {
-			log.Fatal(err)
-		}
+	defaults()
+	c.Load()
+
+	createTls()
+	createRoutes()
+	err := run()
+	if err != nil {
+		log.Fatal(err)
 	}
 }

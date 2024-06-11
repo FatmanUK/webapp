@@ -22,12 +22,12 @@ func createRoutes() {
 
 // https://go.dev/doc/articles/wiki/
 
-func run(tls_key string, tls_cert string) error {
-	return http.ListenAndServeTLS(":8443", tls_cert, tls_key, nil)
+func run() error {
+	return http.ListenAndServeTLS(":8443", c.GetString("tls.crt"), c.GetString("tls.key"), nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/view/" + conf.web.first_page, http.StatusFound)
+	http.Redirect(w, r, "/view/" + c.GetString("web.first_page"), http.StatusFound)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
