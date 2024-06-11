@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 //	"fatgo/mktls"
+	"encoding/base64"
 )
 
 func fileExists(name string) error {
@@ -39,6 +40,10 @@ var c = &JsonConfig{
 	configFile,
 	make(map[string]string)}
 
+var BUILD_MODE string
+var BUILD_COMMAND_B64 string
+var BUILD_COMMAND string
+
 func defaults() {
 	c.SetString("web.root", defaultWebRoot)
 	c.SetString("web.port", defaultWebPort)
@@ -54,9 +59,16 @@ func main() {
 	defaults()
 	c.Load()
 
+	decoded, err := base64.StdEncoding.DecodeString(BUILD_COMMAND_B64)
+	if err != nil {
+		panic(err.Error())
+	}
+	BUILD_COMMAND = string(decoded)
+	log.Output(0, "Compile args: " + BUILD_COMMAND)
+
 	createTls()
 	createRoutes()
-	err := run()
+	err = run()
 	if err != nil {
 		log.Fatal(err)
 	}
