@@ -28,6 +28,9 @@ var defaultTlsKey = "tls/tls.key"
 var defaultTlsCrt = "tls/tls.crt"
 var defaultFirstPage = "FrontPage"
 
+var BUILD_MODE = ""
+var BUILD_COMMAND_B64 = ""
+
 // hmm, set these in build options?
 func makeDefaults() {
 	conf.web.root = defaultWebRoot
