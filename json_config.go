@@ -10,35 +10,35 @@ import (
 type JsonSaver struct {
 }
 
-func (*JsonSaver) operate(j *JsonConfig) {
+func (*JsonSaver) operate(file string, j *map[string]string) {
 	mode := os.O_CREATE|os.O_WRONLY
-	file, err := os.OpenFile(j.file, mode, os.ModePerm)
-	defer file.Close()
+	f, err := os.OpenFile(file, mode, os.ModePerm)
+	defer f.Close()
 	if err != nil {
 		panic("Conf file not found")
 	}
-	encoder := json.NewEncoder(file)
-	encoder.Encode(&(j.values))
+	encoder := json.NewEncoder(f)
+	encoder.Encode(j)
 }
 
 type JsonLoader struct {
 }
 
-func (*JsonLoader) operate(j *JsonConfig) {
-	file, err := os.Open(j.file)
-	defer file.Close()
+func (*JsonLoader) operate(file string, j *map[string]string) {
+	f, err := os.Open(file)
+	defer f.Close()
 	if err != nil {
 		panic("Conf file not found")
 	}
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&(j.values))
+	decoder := json.NewDecoder(f)
+	err = decoder.Decode(j)
 	if err != nil {
 		panic("Decoding failed")
 	}
 }
 
 type JsonOperator interface {
-	operate(*JsonConfig)
+	operate(string, *map[string]string)
 }
 
 type JsonConfig struct {
@@ -97,7 +97,7 @@ func (re *JsonConfig) SetBool(key string, value bool) {
 }
 
 func (re *JsonConfig) operate(j JsonOperator) {
-	j.operate(re)
+	j.operate(re.file, &(re.values))
 }
 
 func (re *JsonConfig) Save() {
