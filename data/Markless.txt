@@ -81,7 +81,7 @@ ___
 [text](https://www.google.com "Crappy search")
 
 ## Simple URLs
-<www.google.com>
+<https://www.google.com>  
 <bob@bobcom.com>  
   
-Enough nonsense. Back to [FrontPage].
+Enough nonsense. Back to [Home].
