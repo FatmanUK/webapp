@@ -23,7 +23,10 @@ func createRoutes() {
 // https://go.dev/doc/articles/wiki/
 
 func run() error {
-	return http.ListenAndServeTLS(":8443", c.GetString("tls.crt"), c.GetString("tls.key"), nil)
+	port := c.GetString("web.port")
+	key := c.GetString("tls.key")
+	cert := c.GetString("tls.crt")
+	return http.ListenAndServeTLS(":" + port, cert, key, nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {

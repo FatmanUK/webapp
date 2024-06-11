@@ -1,4 +1,5 @@
 FIRST_PAGE="FrontPage"
+PORT="8443"
 
 LDFLAGS =-X main.BUILD_MODE=@(BUILD_MODE)
 LDFLAGS+=-X main.configFile=@(CONFIG_FILE)
@@ -6,6 +7,7 @@ LDFLAGS+=-X main.defaultWebRoot=@(WEB_ROOT)
 LDFLAGS+=-X main.defaultTlsKey=@(TLS_KEY)
 LDFLAGS+=-X main.defaultTlsCrt=@(TLS_CERT)
 LDFLAGS+=-X main.defaultFirstPage=$(FIRST_PAGE)
+LDFLAGS+=-X main.defaultWebPort=$(PORT)
 LDFLAGS+=@(EXTRA_LDFLAGS)
 
 ifeq (@(OS), "windows")
