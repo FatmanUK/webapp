@@ -30,6 +30,7 @@ func createTls() {
 
 // must set these with build options
 var configFile string
+var databaseFile string
 var defaultWebRoot string
 var defaultWebPort string
 var defaultTlsKey string
@@ -48,6 +49,7 @@ func defaults() {
 	c.SetString("web.root", defaultWebRoot)
 	c.SetString("web.port", defaultWebPort)
 	c.SetString("web.first_page", defaultFirstPage)
+	c.SetString("db.file", databaseFile)
 	c.SetString("tls.key", defaultTlsKey)
 	c.SetString("tls.crt", defaultTlsCrt)
 	if ! c.FileExists() {
@@ -66,6 +68,7 @@ func main() {
 	BUILD_COMMAND = string(decoded)
 	log.Output(0, "Compile args: " + BUILD_COMMAND)
 
+	openDatabase()
 	createTls()
 	createRoutes()
 	err = run()

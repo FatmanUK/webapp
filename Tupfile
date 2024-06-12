@@ -3,6 +3,7 @@ PORT="8443"
 
 LDFLAGS =-X main.BUILD_MODE=@(BUILD_MODE)
 LDFLAGS+=-X main.configFile=@(CONFIG_FILE)
+LDFLAGS+=-X main.databaseFile=@(DATABASE_FILE)
 LDFLAGS+=-X main.defaultWebRoot=@(WEB_ROOT)
 LDFLAGS+=-X main.defaultTlsKey=@(TLS_KEY)
 LDFLAGS+=-X main.defaultTlsCrt=@(TLS_CERT)
