@@ -11,3 +11,6 @@ cc/
 static/
 webapp.cfg
 notes/
+go.sum
+*.db
+*.txt
