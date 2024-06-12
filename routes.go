@@ -30,7 +30,8 @@ func run() error {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/view/" + c.GetString("web.first_page"), http.StatusFound)
+	page := c.GetString("web.first_page")
+	http.Redirect(w, r, "/view/" + page, http.StatusFound)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
