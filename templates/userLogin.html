@@ -3,8 +3,12 @@
 <form action="/user/login2" method="POST">
 	<p><label name="User">User: </label><input name="User" /></p>
 	<p>Nonce: {{printf "%s" .User.Nonce}}</p>
-	<p><tt>$ &lt;&lt;&lt;"{{printf "%s" .User.Nonce}}" gpg --clear-sign</tt></p>
-	<p><label name="Datum">Message and Signature: </label><textarea name="Datum"></textarea></p>
+	<p><tt>$ &lt;&lt;&lt;"{{printf "%s" .User.Nonce}}" gpg --clear-sign -u <span id="user"></span></tt></p>
+	<p><label name="Datum">Message and Signature: </label><textarea cols="70" rows="22" name="Datum"></textarea></p>
 	<p><input type="Submit" value="Login" /></p>
 </form>
 <hr/>
+<script language="Javascript">
+	// span#user
+	// TODO: when User field changes, update value in span#user
+</script>
