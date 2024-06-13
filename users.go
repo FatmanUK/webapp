@@ -17,7 +17,26 @@ type User struct {
 // should have called this sessions
 var users map[string]User = map[string]User{}
 
-func userFromCookie(r *http.Request) (User, error) {
+func (re User) debugOutput() string {
+	output := `
+## Sessions
+  
+`
+	for k, _ := range sessions {
+		output += `
+    Session:      ` + k + `  
+    User.Name:    ` + sessions[k].Name + `  
+    User.Session: ` + sessions[k].Session + `  
+    User.Nonce:   ` + sessions[k].Nonce /*+ `  
+    User.Groups:  ` + sessions[k].Groups + `  
+`*/
+	}
+	output += `
+___`
+	return output
+}
+
+func userFromCookie(r *http.Request) (*User, error) {
 	c, err := r.Cookie("session_token")
 	if err == nil {
 		return users[c.Value], nil

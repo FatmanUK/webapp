@@ -46,6 +46,14 @@ type JsonConfig struct {
 	values map[string]string
 }
 
+func (re JsonConfig) debugOutput() string {
+	output := `
+## Config
+  
+___`
+	return output
+}
+
 func (re *JsonConfig) FileExists() bool {
 	_, err := os.Stat(re.file)
 	return ! errors.Is(err, os.ErrNotExist)

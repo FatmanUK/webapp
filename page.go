@@ -11,6 +11,14 @@ type Page struct {
 	Body    []byte
 }
 
+func (re Page) debugOutput() string {
+	output := `
+## Pages
+  
+___`
+	return output
+}
+
 var db *gorm.DB
 
 func openDatabase() {

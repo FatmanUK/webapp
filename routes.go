@@ -11,6 +11,14 @@ type View struct {
 }
 
 var pathRe = "^/(edit|save|view|user)/([a-zA-Z0-9]+)$"
+func (re View) debugOutput() string {
+	output := `
+## View
+  
+___`
+	return output
+}
+
 var validPath = regexp.MustCompile(pathRe)
 
 func createRoutes() {
@@ -18,7 +26,9 @@ func createRoutes() {
 	http.HandleFunc("/edit/", makeHandler(editHandler))
 	http.HandleFunc("/save/", makeHandler(saveHandler))
 	http.HandleFunc("/user/", makeHandler(userHandler))
-
+	if BUILD_MODE == "Debug" {
+		http.HandleFunc("/debug/", makeHandler(debugHandler))
+	}
 	fs := http.FileServer(http.Dir("static"))
 	t := http.StripPrefix("/static/", fs)
 	http.Handle("/static/", t)
@@ -69,6 +79,22 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		return
 	}
 	http.Redirect(w, r, "/view/" + title, http.StatusFound)
+}
+
+func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
+	user, _ := userFromCookie(r)
+	if user == nil {
+		user = &User{}
+	}
+
+	template := "debug"
+	p := Page{Title: "Debug"}
+	output := User{}.debugOutput()
+	output += c.debugOutput()
+	output += Page{}.debugOutput()
+	output += View{}.debugOutput()
+	p.Body = []byte(output)
+	renderTemplate(w, template, &View{Page: &p, User: *user})
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request, a string) {

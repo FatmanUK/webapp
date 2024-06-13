@@ -11,6 +11,7 @@ import (
 var templates = template.Must(template.ParseFiles(
 	"templates/edit.html",
 	"templates/view.html",
+	"templates/debug.html",
 	"templates/userDefault.html",
 	"templates/userLogin.html",
 	"templates/userLoginFailed.html",
@@ -30,7 +31,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p interface{}) {
 	if err != nil {
 		http.Error(w, err.Error(), herr_500)
 	}
-	if tmpl == "view" {
+	if tmpl == "view" || tmpl == "debug" {
 		output, err = markupOutput(output)
 	}
 	// add a header and footer which are not marked up
