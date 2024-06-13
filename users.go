@@ -14,7 +14,8 @@ type User struct {
 	Session string // session identifier
 }
 
-var users map[string]User // should have called this sessions
+// should have called this sessions
+var users map[string]User = map[string]User{}
 
 func userFromCookie(r *http.Request) (User, error) {
 	c, err := r.Cookie("session_token")
@@ -24,13 +25,13 @@ func userFromCookie(r *http.Request) (User, error) {
 	return User{}, errors.New("There Is No Cookie")
 }
 
-func userLogin(user *User, w http.ResponseWriter) {
-	delete(users, user.Session)
+func userLogin(session string, w http.ResponseWriter) User {
+	delete(users, session)
 
-	session := betterguid.New()
-	user = &User{Session: session, Nonce: betterguid.New()}
+	session = betterguid.New()
+	user := User{Session: session, Nonce: betterguid.New()}
 
-	users[session] = *user
+	users[session] = user
 
 	// write session cookie
 	expiry := time.Now().Add(24 * time.Hour)
@@ -40,4 +41,5 @@ func userLogin(user *User, w http.ResponseWriter) {
 		Expires: expiry }
 
 	http.SetCookie(w, cookie)
+	return user
 }

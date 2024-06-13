@@ -74,19 +74,23 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 	user, _ := userFromCookie(r)
 	template := "userDefault"
+	p := Page{Title: "User Default"}
 	if a == "login" {
 		template = "userLogin"
-		userLogin(&user, w)
+		user = userLogin(user.Session, w)
+		p.Title = "Login"
 	}
 	if a == "login2" {
 		template = "userLoginFailed"
+		p.Title = "Access Denied"
 		r.ParseForm()
 		if isVerifiedPgpClearSignature(r, &user) {
 			template = "userWelcome"
+			p.Title = "Hello"
 		}
 	}
 	// TODO: logout route?
-	renderTemplate(w, template, &View{Page: nil, User: user})
+	renderTemplate(w, template, &View{Page: &p, User: user})
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
