@@ -10,7 +10,6 @@ type View struct {
 	User User
 }
 
-var pathRe = "^/(edit|save|view|user)/([a-zA-Z0-9]+)$"
 func (re View) debugOutput() string {
 	output := `
 ## View
@@ -19,6 +18,7 @@ ___`
 	return output
 }
 
+var pathRe = "^/(edit|save|view|user|debug)/([a-zA-Z0-9]+)$"
 var validPath = regexp.MustCompile(pathRe)
 
 func createRoutes() {
@@ -51,22 +51,31 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	u, _ := userFromCookie(r)
+	user, _ := userFromCookie(r)
+
+	if user == nil {
+		user = &User{}
+	}
+
 	p, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/" + title, http.StatusFound)
 		return
 	}
-	renderTemplate(w, "view", &View{Page: p, User: u})
+	renderTemplate(w, "view", &View{Page: p, User: *user})
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
-	u, _ := userFromCookie(r)
+	user, _ := userFromCookie(r)
+	if user == nil {
+		user = &User{}
+	}
+
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	renderTemplate(w, "edit", &View{Page: p, User: u})
+	renderTemplate(w, "edit", &View{Page: p, User: *user})
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -99,6 +108,9 @@ func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 	user, _ := userFromCookie(r)
+	if user == nil {
+		user = &User{}
+	}
 	template := "userDefault"
 	p := Page{Title: "User Default"}
 	if a == "login" {
@@ -110,13 +122,13 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		template = "userLoginFailed"
 		p.Title = "Access Denied"
 		r.ParseForm()
-		if isVerifiedPgpClearSignature(r, &user) {
+		if isVerifiedPgpClearSignature(r, user) {
 			template = "userWelcome"
 			p.Title = "Hello"
 		}
 	}
 	// TODO: logout route?
-	renderTemplate(w, template, &View{Page: &p, User: user})
+	renderTemplate(w, template, &View{Page: &p, User: *user})
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
