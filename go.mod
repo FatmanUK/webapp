@@ -21,3 +21,5 @@ require (
 	modernc.org/memory v1.5.0 // indirect
 	modernc.org/sqlite v1.23.1 // indirect
 )
+
+require github.com/kjk/betterguid v0.0.0-20170621091430-c442874ba63a
