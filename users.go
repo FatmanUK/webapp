@@ -60,7 +60,8 @@ func userLogin(session string, w http.ResponseWriter) *User {
 	cookie := &http.Cookie{
 		Name: "session_token",
 		Value:   session,
-		Expires: expiry }
+		Expires: expiry,
+		Path: "/" }
 
 	http.SetCookie(w, cookie)
 	return user
