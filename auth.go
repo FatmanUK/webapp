@@ -3,7 +3,18 @@ package main
 import (
 	"net/http"
 	"regexp"
+	"fmt"
+	"strings"
+//	"golang.org/x/crypto/openpgp"
 )
+
+// gpg --export --armor f@d.n >keys/f@d.n.asc
+
+// I'm going to rule that the file path *needs* to be "-" here. It's
+// beyond the scope of this project to determine what is and isn't a
+// valid file path, which is no simple thing. Easier to insist on the
+// stdin "pseudo-file", which is a single hyphen.
+var nonceRe = "- ([^\n]*)"
 
 func makeMatch(msg string, re string) ([]string, bool) {
 	r := regexp.MustCompile(re)
@@ -14,8 +25,13 @@ func makeMatch(msg string, re string) ([]string, bool) {
 	return m, true
 }
 
-func isFilePath(f string) bool {
-	// TODO
+func isGoodHash(hash string) bool {
+	switch hash {
+		case "SHA256", "SHA512": { }
+		default: {
+			return false
+		}
+	}
 	return true
 }
 
@@ -31,49 +47,38 @@ func isValidPgpClearSignature(r *http.Request) bool {
 	var bpsRe = "-----BEGIN PGP SIGNATURE-----"
 	var epsRe = "-----END PGP SIGNATURE-----"
 	var hashRe = "Hash: ([A-z0-9-_]*)"
-	var line4Re = "(.*?) (.*?)"
-
-	ok := true
-
-	_, e := makeMatch(msg, bsmRe)
-	ok = ok && e
-
-	_, e = makeMatch(msg, bpsRe)
-	ok = ok && e
-
-	_, e = makeMatch(msg, epsRe)
-	ok = ok && e
-
 	m, e := makeMatch(msg, hashRe)
-	ok = ok && e
-
 	if m != nil {
-		hash := m[1]
-		switch hash {
-			case "SHA256", "SHA512": { }
-			default: {
-				ok = false
-			}
+		if ! isGoodHash(m[1]) {
+			return false
 		}
 	}
-
-	m, e = makeMatch(msg, line4Re)
-	ok = ok && e
-
-	if m != nil {
-		file := m[1]
-		if ! (isFilePath(file) || file == "-") {
-			ok = false
-		}
+	regexes := []string{bsmRe, bpsRe, epsRe, nonceRe}
+	ok := true
+	for _, v := range regexes {
+		_, e = makeMatch(msg, v)
+		ok = ok && e
 	}
 	return ok
 }
 
-func sigIsVerified(name string, datum string, nonce string) bool {
-	if ! sameNonce(nonce, datum) {
+func isVerifiedPgpClearSignature(r *http.Request, user *User) bool {
+	if ! isValidPgpClearSignature(r) {
 		return false
 	}
+	nonce := user.Nonce
+	user.Nonce = "" // only use once
+	datum := r.PostForm["Datum"][0]
+	if ! isSameNonce(nonce, datum) {
+		return false
+	}
+	//fmt.Println("Good nonce.")
+	name := r.PostForm["User"][0]
+	user.Name = name
 
+//	public_key_armored := "keys/" + name + ".asc"
+
+// https://stackoverflow.com/questions/33963284/verify-gpg-signature-in-go-openpgp
 /*
 $ <<<"123456789" gpg --clear-sign | gpg --verify
 gpg: Signature made Wed 12 Jun 2024 13:07:21 BST
@@ -86,19 +91,8 @@ gpg: Signature made Wed 12 Jun 2024 13:07:31 BST
 gpg:                using RSA key B2114...0310E8
 gpg: BAD signature from "Adam Richardson <adam.richardson@>" [ultimate]
 */
-	// https://stackoverflow.com/questions/33963284/verify-gpg-signature-in-go-openpgp
-	return true
-}
-
-func isVerifiedPgpClearSignature(r *http.Request, user *User) bool {
-	if ! isValidPgpClearSignature(r) {
-		return false
-	}
-	nonce := user.Nonce
-	user.Nonce = "" // only use once
-	name := r.PostForm["User"][0]
-	datum := r.PostForm["Datum"][0]
-	if sigIsVerified(name, datum, nonce) {
+//	if isVerified(name, datum, nonce)
+	{
 		user.Name = name
 		user.authorise()
 		return true
