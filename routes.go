@@ -81,12 +81,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
-	err := p.save()
-	if err != nil {
-		herr_500 := http.StatusInternalServerError
-		http.Error(w, err.Error(), herr_500)
-		return
-	}
+	p.save()
 	http.Redirect(w, r, "/view/" + title, http.StatusFound)
 }
 

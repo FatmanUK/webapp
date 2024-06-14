@@ -37,7 +37,6 @@ func loadPage(title string) (*Page, error) {
 	return p, result.Error
 }
 
-func (p *Page) save() error {
+func (p *Page) save() {
 	db.Create(p)
-	return nil
 }
