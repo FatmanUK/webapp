@@ -61,7 +61,8 @@ func userLogin(session string, w http.ResponseWriter) *User {
 		Name: "session_token",
 		Value:   session,
 		Expires: expiry,
-		Path: "/" }
+		Path: "/",
+		SameSite: http.SameSiteLaxMode }
 
 	http.SetCookie(w, cookie)
 	return user
