@@ -2,10 +2,46 @@
 	font-family: sans-serif;
 }
 
+header {
+	margin: 5px;
+}
+
+header#username {
+	float: left;
+}
+
+footer {
+	margin: 5px;
+}
+
+footer#gh {
+	float: left;
+}
+
 hr {
 	width: 50%;
+	clear: both;
 }
 
 tt {
 	font-family: "Monaspace Krypton Var", monospace
+}
+
+article {
+	margin: 5px;
+}
+
+article > h1 {
+	float: left;
+}
+
+h1 + a {
+	float: left;
+	margin-top: 22px;
+	margin-left: 10px;
+	font-size: smaller;
+}
+
+p.clearer {
+	clear: both;
 }
