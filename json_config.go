@@ -49,7 +49,6 @@ type JsonConfig struct {
 func (re JsonConfig) debugOutput() string {
 	output := `
 ## Config
-  
 ___`
 	return output
 }

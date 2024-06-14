@@ -18,9 +18,7 @@ var sessions map[string]*User = map[string]*User{}
 
 func (re User) debugOutput() string {
 	output := `
-## Sessions
-  
-`
+## Sessions`
 	for k, _ := range sessions {
 		output += `
     Session:      ` + k + `  

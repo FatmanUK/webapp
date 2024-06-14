@@ -14,7 +14,6 @@ type Page struct {
 func (re Page) debugOutput() string {
 	output := `
 ## Pages
-  
 ___`
 	return output
 }

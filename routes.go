@@ -13,7 +13,6 @@ type View struct {
 func (re View) debugOutput() string {
 	output := `
 ## View
-  
 ___`
 	return output
 }
