@@ -19,9 +19,14 @@ func isFilePath(f string) bool {
 	return true
 }
 
+func isSameNonce(nonceFromUser string, msg string) bool {
+	m, _ := makeMatch(msg, nonceRe)
+	nonceFromMessage := strings.TrimSpace(m[1])
+	return (nonceFromMessage == nonceFromUser)
+}
+
 func isValidPgpClearSignature(r *http.Request) bool {
 	msg := r.PostForm["Datum"][0]
-
 	var bsmRe = "-----BEGIN PGP SIGNED MESSAGE-----"
 	var bpsRe = "-----BEGIN PGP SIGNATURE-----"
 	var epsRe = "-----END PGP SIGNATURE-----"
@@ -61,7 +66,6 @@ func isValidPgpClearSignature(r *http.Request) bool {
 			ok = false
 		}
 	}
-
 	return ok
 }
 
@@ -83,11 +87,6 @@ gpg:                using RSA key B2114...0310E8
 gpg: BAD signature from "Adam Richardson <adam.richardson@>" [ultimate]
 */
 	// https://stackoverflow.com/questions/33963284/verify-gpg-signature-in-go-openpgp
-	return true
-}
-
-func sameNonce(nonce string, msg string) bool {
-	// TODO
 	return true
 }
 
