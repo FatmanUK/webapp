@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/glebarez/sqlite v1.11.0
+	github.com/kjk/betterguid v0.0.0-20170621091430-c442874ba63a
 	gorm.io/gorm v1.25.10
 )
 
@@ -21,5 +22,3 @@ require (
 	modernc.org/memory v1.5.0 // indirect
 	modernc.org/sqlite v1.23.1 // indirect
 )
-
-require github.com/kjk/betterguid v0.0.0-20170621091430-c442874ba63a
