@@ -35,10 +35,15 @@ ___`
 	return output
 }
 
+func (re *User) authorise() {
+	// TODO: do something with user
+	// get groups
+	re.Groups = []string{"authors"}
+}
+
 func userFromCookie(r *http.Request) (*User, error) {
 	c, err := r.Cookie("session_token")
 	if err == nil {
-		//fmt.Println("Session token: " + c.Value)
 		return sessions[c.Value], nil
 	}
 	return nil, errors.New("There Is No Cookie")
@@ -46,16 +51,12 @@ func userFromCookie(r *http.Request) (*User, error) {
 
 func userLogin(session string, w http.ResponseWriter) *User {
 	delete(sessions, session)
-
 	session = betterguid.New()
 	user := &User{Session: session, Nonce: betterguid.New()}
 	for user.Session == user.Nonce {
 		user.Nonce = betterguid.New()
 	}
-
 	sessions[session] = user
-
-	// write session cookie
 	expiry := time.Now().Add(24 * time.Hour)
 	cookie := &http.Cookie{
 		Name: "session_token",
@@ -63,7 +64,6 @@ func userLogin(session string, w http.ResponseWriter) *User {
 		Expires: expiry,
 		Path: "/",
 		SameSite: http.SameSiteLaxMode }
-
 	http.SetCookie(w, cookie)
 	return user
 }

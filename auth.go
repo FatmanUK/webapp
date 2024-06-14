@@ -91,12 +91,6 @@ func sameNonce(nonce string, msg string) bool {
 	return true
 }
 
-func authoriseUser(user *User) {
-	// do something with user
-	// get groups
-	user.Groups = []string{"authors"}
-}
-
 func isVerifiedPgpClearSignature(r *http.Request, user *User) bool {
 	if ! isValidPgpClearSignature(r) {
 		return false
@@ -107,7 +101,7 @@ func isVerifiedPgpClearSignature(r *http.Request, user *User) bool {
 	datum := r.PostForm["Datum"][0]
 	if sigIsVerified(name, datum, nonce) {
 		user.Name = name
-		authoriseUser(user)
+		user.authorise()
 		return true
 	}
 	return false
