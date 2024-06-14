@@ -1,14 +1,11 @@
 <h1>Login</h1>
 <hr/>
-<form action="/user/login2" method="POST">
-	<p><label name="User">User: </label><input name="User" /></p>
+<form action="/user/login2" method="POST" onLoad="update();">
+	<p><label name="User">User: </label><input name="User" id="User" onInput="update();" onChange="update();" onUnfocus="update();" onFocus="update();" /></p>
 	<p>Nonce: {{printf "%s" .User.Nonce}}</p>
 	<p><tt>$ &lt;&lt;&lt;"{{printf "%s" .User.Nonce}}" gpg --clear-sign -u <span id="user"></span></tt></p>
 	<p><label name="Datum">Message and Signature: </label><textarea cols="70" rows="22" name="Datum"></textarea></p>
 	<p><input type="Submit" value="Login" /></p>
 </form>
 <hr/>
-<script language="Javascript">
-	// span#user
-	// TODO: when User field changes, update value in span#user
-</script>
+<script language="Javascript" type="text/javascript" src="/static/webapp.js"></script>

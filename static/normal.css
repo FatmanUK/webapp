@@ -2,19 +2,11 @@
 	font-family: sans-serif;
 }
 
-header {
+header, footer, article {
 	margin: 5px;
 }
 
-header#username {
-	float: left;
-}
-
-footer {
-	margin: 5px;
-}
-
-footer#gh {
+header#username, header#home, footer#gh, article > h1:first-child {
 	float: left;
 }
 
@@ -23,16 +15,8 @@ hr {
 	clear: both;
 }
 
-tt {
+tt, span#user {
 	font-family: "Monaspace Krypton Var", monospace
-}
-
-article {
-	margin: 5px;
-}
-
-article > h1 {
-	float: left;
 }
 
 h1 + a {

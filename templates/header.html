@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head><title>WebApp :: {{.Page.Title}}</title><link rel="Stylesheet" href="/static/normal.css" /></head>
-<header><a href="/">F</a></header>
+<header id="home"><a href="/">F</a></header>
 <header id="username">{{ if eq .User.Name "" }}<a href="/user/login">Not logged in</a>{{ else }}{{ .User.Name }}{{ end }}</header>
 <p class="clearer"></p>
 <article>
