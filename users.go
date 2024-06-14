@@ -24,9 +24,11 @@ func (re User) debugOutput() string {
     Session:      ` + k + `  
     User.Name:    ` + sessions[k].Name + `  
     User.Session: ` + sessions[k].Session + `  
-    User.Nonce:   ` + sessions[k].Nonce /*+ `  
-    User.Groups:  ` + sessions[k].Groups + `  
-`*/
+    User.Nonce:   ` + sessions[k].Nonce
+		for _, v := range sessions[k].Groups {
+			output += `
+    User.Group:   ` + v
+		}
 	}
 	output += `
 ___`
