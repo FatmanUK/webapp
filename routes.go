@@ -116,7 +116,8 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		template = "userLoginFailed"
 		p.Title = "Access Denied"
 		r.ParseForm()
-		if isVerifiedPgpClearSignature(r, user) {
+		pubkey := loadTextFile("keys/" + r.PostForm["User"][0] + ".asc")
+		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
 			template = "userWelcome"
 			p.Title = "Hello"
 		}

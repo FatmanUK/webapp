@@ -1,5 +1,21 @@
 package main
 
+import (
+	"testing"
+)
+
+func TestTemplate(t *testing.T) {
+//22:func captureTemplate(tmpl string, p interface{}) ([]byte, error) {
 /*
- *   Spruce up the page templates by making them valid HTML and adding some CSS rules.
- */
+	if isGoodHash("SHA256") {
+		t.Logf("SHA256 ok")
+	} else {
+		t.Fatalf("Should be true")
+	}
+	if isGoodHash("SHA512") {
+		t.Logf("SHA512 ok")
+	} else {
+		t.Fatalf("Should be true")
+	}
+*/
+}
