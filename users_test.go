@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestTemplate(t *testing.T) {
-//22:func captureTemplate(tmpl string, p interface{}) ([]byte, error) {
+func TestAuthorise(t *testing.T) {
+//38:func (re *User) authorise() {
 /*
 	if isGoodHash("SHA256") {
 		t.Logf("SHA256 ok")

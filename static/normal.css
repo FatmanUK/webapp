@@ -2,10 +2,30 @@
 	font-family: sans-serif;
 }
 
-hr {
-	width: 50%;
+header, footer, article {
+	margin: 5px;
 }
 
-tt {
+header#username, header#home, footer#gh, article > h1:first-child {
+	float: left;
+}
+
+hr {
+	width: 50%;
+	clear: both;
+}
+
+tt, span#user {
 	font-family: "Monaspace Krypton Var", monospace
+}
+
+h1 + a {
+	float: left;
+	margin-top: 22px;
+	margin-left: 10px;
+	font-size: smaller;
+}
+
+p.clearer {
+	clear: both;
 }

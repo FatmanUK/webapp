@@ -1,16 +1,23 @@
-build-*/
+# Build process byproducts
 .tup/
+_obj/
+cc/
+go.sum
+
+# Build output
+build-*/
 linux
 linuxd
 windows.exe
 windowsd.exe
-tls/
-data/
-_obj/
-cc/
+
+# Local configuration
+keys/
 static/
+tls/
 webapp.cfg
+webapp.db
+
+# Local garbage
 notes/
-go.sum
-*.db
 *.txt

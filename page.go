@@ -11,6 +11,13 @@ type Page struct {
 	Body    []byte
 }
 
+func (re Page) debugOutput() string {
+	output := `
+## Pages
+___`
+	return output
+}
+
 var db *gorm.DB
 
 func openDatabase() {
@@ -29,7 +36,6 @@ func loadPage(title string) (*Page, error) {
 	return p, result.Error
 }
 
-func (p *Page) save() error {
+func (p *Page) save() {
 	db.Create(p)
-	return nil
 }
