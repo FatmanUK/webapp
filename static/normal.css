@@ -2,12 +2,61 @@
 	font-family: sans-serif;
 }
 
+body {
+	background-color: #fbe7d3;
+}
+
 header, footer, article {
 	margin: 5px;
 }
 
+header, footer {
+	border: 1px black solid;
+	padding: 10px;
+	border-radius: 15px;
+	background-color: white;
+}
+
+article {
+	background-color: white;
+	padding: 10px;
+	border: 1px black solid;
+	margin-top: 30px;
+}
+
 header#username, header#home, footer#gh, article > h1:first-child {
 	float: left;
+	margin-top: 0;
+}
+
+h1 {
+	font-size: 2em;
+	margin: 0.8em 0;
+}
+
+h2 {
+	font-size: 1.7em;
+	margin: 0.8em 0;
+}
+
+h3 {
+	font-size: 1.5em;
+	margin: 0.8em 0;
+}
+
+h4 {
+	font-size: 1.3em;
+	margin: 0.8em 0;
+}
+
+h5 {
+	font-size: 1.15em;
+	margin: 0.8em 0;
+}
+
+h6 {
+	font-size: 1em;
+	margin: 0.8em 0;
 }
 
 hr {
@@ -15,17 +64,64 @@ hr {
 	clear: both;
 }
 
-tt, span#user {
+tt.code > p, tt.command, span#user {
 	font-family: "Monaspace Krypton Var", monospace
+}
+
+tt.code {
+	border: 1px inset;
+	display: block;
+	width: 800px;
+	padding: 3px;
+	background-color: #e3e3e3;
+}
+
+tt.code > p:before {
+	content: counter(my-counter);
+	padding-right: 20px;
+	margin-right: 3px;
+	text-align: right;
+	background-color: #ffdbd0;
+}
+
+tt.code > p {
+	counter-increment: my-counter;
+	margin: 0;
+}
+
+tt.code:before {
+	counter-reset: my-counter;
 }
 
 h1 + a {
 	float: left;
-	margin-top: 22px;
+	margin-top: 2px;
 	margin-left: 10px;
 	font-size: smaller;
 }
 
 p.clearer {
 	clear: both;
+}
+
+sub, sup {
+	font-size: x-small;
+}
+
+figure.quote {
+	padding-left: 30px;
+	background-image: url("/static/quote_gradient.png");
+	background-repeat: repeat-y;
+}
+
+blockquote {
+	margin-left: 0;
+	padding-left: 10px;
+}
+
+figcaption {
+	margin-left: 0;
+	margin-right: 20px;
+	margin-top: 20px;
+	margin-bottom: 20px;
 }

@@ -75,7 +75,7 @@ func markupAsterisks(line *[]byte) {
 }
 
 func markupCite(line *[]byte) {
-	citeText := `<figure>
+	citeText := `<figure class="quote">
   <blockquote>
     <p>"$2"</p>
   </blockquote>
@@ -87,7 +87,7 @@ func markupCite(line *[]byte) {
 }
 
 func markupQuote(line *[]byte) {
-	quoteText := `<figure>
+	quoteText := `<figure class="quote">
   <blockquote>
     <p>"$1"</p>
   </blockquote>
@@ -100,7 +100,9 @@ func markupBr(line *[]byte) {
 }
 
 func markupCode(line *[]byte) {
-	*line = codeRe.ReplaceAll(*line, []byte("<tt>$2</tt>"))
+	*line = codeRe.ReplaceAll(*line, []byte(`<tt class="code">
+<p>$2</p>
+</tt>`))
 }
 
 func markupFootnote(line *[]byte, addFootnotes *bytes.Buffer) {
@@ -196,16 +198,20 @@ func markupOutput(o []byte) ([]byte, error) {
 		os.Write([]byte("\n"))
 	}
 	if len(addFootnotes.Bytes()) > 0 {
-		os.Write([]byte("Footnotes:<br/>\n"))
+		os.Write([]byte("<br/><br/><hr/>\n"))
+		os.Write([]byte("<h6 id=\"footnotes\">Footnotes:</h6>\n"))
 		os.Write(addFootnotes.Bytes())
-		os.Write([]byte("<hr/>\n"))
 	}
 	// smooth over lists
 	smoothOs := os.Bytes()
-	var olSmoothRe = regexp.MustCompile(`</ol>\n<ol>`)
+	var olSmoothRe = regexp.MustCompile(`\n</ol>\n<ol>`)
 	smoothOs = olSmoothRe.ReplaceAll(smoothOs, []byte(""))
 
-	var ulSmoothRe = regexp.MustCompile(`</ul>\n<ul>`)
+	var ulSmoothRe = regexp.MustCompile(`\n</ul>\n<ul>`)
 	smoothOs = ulSmoothRe.ReplaceAll(smoothOs, []byte(""))
+
+	var ttSmoothRe = regexp.MustCompile(`\n</tt>\n<tt class="code">`)
+	smoothOs = ttSmoothRe.ReplaceAll(smoothOs, []byte(""))
+
 	return smoothOs, err
 }
