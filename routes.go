@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"regexp"
+	"slices"
 )
 
 type View struct {
@@ -31,7 +32,6 @@ func createRoutes() {
 	fs := http.FileServer(http.Dir("static"))
 	t := http.StripPrefix("/static/", fs)
 	http.Handle("/static/", t)
-
 	http.HandleFunc("/", handler)
 }
 
@@ -51,13 +51,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	user, _ := userFromCookie(r)
-
 	if user == nil {
 		user = &User{}
 	}
-
 	p, err := loadPage(title)
 	if err != nil {
+		if ! slices.Contains(user.Groups, "authors") {
+			denyNotFound(w, r)
+			return
+		}
 		http.Redirect(w, r, "/edit/" + title, http.StatusFound)
 		return
 	}
@@ -69,7 +71,14 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if user == nil {
 		user = &User{}
 	}
-
+	if user.Name == "" {
+		denyAuthReqd(w, r)
+		return
+	}
+	if ! slices.Contains(user.Groups, "authors") {
+		denyUnauthorised(w, r)
+		return
+	}
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
@@ -77,7 +86,34 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	renderTemplate(w, "edit", &View{Page: p, User: *user})
 }
 
+func denyNotFound(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/", http.StatusNotFound)
+}
+
+func denyAuthReqd(w http.ResponseWriter, r *http.Request) {
+	// The "unauthorized" status actually means "unauthenticated".
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+	http.Redirect(w, r, "/", http.StatusUnauthorized)
+}
+
+func denyUnauthorised(w http.ResponseWriter, r *http.Request) {
+	// We use "Forbidden" to mean "unauthorised".
+	http.Redirect(w, r, "/", http.StatusForbidden)
+}
+
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+	user, _ := userFromCookie(r)
+	if user == nil {
+		user = &User{}
+	}
+	if user.Name == "" {
+		denyAuthReqd(w, r)
+		return
+	}
+	if ! slices.Contains(user.Groups, "authors") {
+		denyUnauthorised(w, r)
+		return
+	}
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	p.save()
@@ -89,9 +125,9 @@ func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if user == nil {
 		user = &User{}
 	}
-
 	template := "debug"
 	p := Page{Title: "Debug"}
+	// TODO: improve this?
 	output := User{}.debugOutput()
 	output += c.debugOutput()
 	output += Page{}.debugOutput()
@@ -116,7 +152,7 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		template = "userLoginFailed"
 		p.Title = "Access Denied"
 		r.ParseForm()
-		pubkey := loadTextFile("keys/" + r.PostForm["User"][0] + ".asc")
+		pubkey := loadTextFile(c.GetString("keys_dir") + "/" + r.PostForm["User"][0] + ".asc")
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
 			template = "userWelcome"
 			p.Title = "Hello"
