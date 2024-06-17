@@ -1,6 +1,6 @@
 module dreamtrack.net/webapp
 
-go 1.18
+go 1.22
 
 require (
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5
