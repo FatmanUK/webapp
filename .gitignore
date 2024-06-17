@@ -13,7 +13,6 @@ windowsd.exe
 
 # Local configuration
 keys/
-static/
 tls/
 webapp.cfg
 webapp.db
