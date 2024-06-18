@@ -158,7 +158,12 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 			p.Title = "Hello"
 		}
 	}
-	// TODO: logout route?
+	if a == "logout" {
+		template = "userLogout"
+		p.Title = "Logout"
+		userLogout(user.Session, w)
+		log.Output(1, "Logout by user")
+	}
 	renderTemplate(w, template, &View{Page: &p, User: *user})
 }
 
