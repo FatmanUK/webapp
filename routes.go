@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"regexp"
 	"slices"
@@ -79,6 +80,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 		denyUnauthorised(w, r)
 		return
 	}
+	log.Output(1, "Editing " + title + ".")
 	p, err := loadPage(title)
 	if err != nil {
 		p = &Page{Title: title}
@@ -88,17 +90,20 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 
 func denyNotFound(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusNotFound)
+	log.Output(1, "Not found.")
 }
 
 func denyAuthReqd(w http.ResponseWriter, r *http.Request) {
 	// The "unauthorized" status actually means "unauthenticated".
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
 	http.Redirect(w, r, "/", http.StatusUnauthorized)
+	log.Output(1, "Login required.")
 }
 
 func denyUnauthorised(w http.ResponseWriter, r *http.Request) {
 	// We use "Forbidden" to mean "unauthorised".
 	http.Redirect(w, r, "/", http.StatusForbidden)
+	log.Output(1, "Not allowed.")
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -114,6 +119,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		denyUnauthorised(w, r)
 		return
 	}
+	log.Output(1, "Saving " + title + ".")
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
 	p.save()
@@ -125,6 +131,7 @@ func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
 	if user == nil {
 		user = &User{}
 	}
+	log.Output(1, "Debug tool accessed.")
 	template := "debug"
 	p := Page{Title: "Debug"}
 	// TODO: improve this?
@@ -147,6 +154,7 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		template = "userLogin"
 		user = userLogin(user.Session, w)
 		p.Title = "Login"
+		log.Output(1, "Login attempt.")
 	}
 	if a == "login2" {
 		template = "userLoginFailed"
@@ -156,6 +164,9 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
 			template = "userWelcome"
 			p.Title = "Hello"
+			log.Output(1, "Login successful.")
+		} else {
+			log.Output(1, "Login failed.")
 		}
 	}
 	if a == "logout" {
