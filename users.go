@@ -49,6 +49,19 @@ func userFromCookie(r *http.Request) (*User, error) {
 	return nil, errors.New("There Is No Cookie")
 }
 
+func userLogout(session string, w http.ResponseWriter) {
+	delete(sessions, session)
+	expiry := time.Now().Add(-24 * time.Hour)
+	cookie := &http.Cookie{
+		Name:   "session_token",
+		Value:  session,
+		Path:   "/",
+		MaxAge: -1,
+		Expires: expiry,
+		SameSite: http.SameSiteLaxMode }
+	http.SetCookie(w, cookie)
+}
+
 func userLogin(session string, w http.ResponseWriter) *User {
 	delete(sessions, session)
 	session = betterguid.New()

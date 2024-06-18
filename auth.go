@@ -81,12 +81,14 @@ func isVerifiedPgpClearSignature(r url.Values, user *User, pubkey string) bool {
 	if ! isSameNonce(nonce, datum) {
 		return false
 	}
-	//fmt.Println("Good nonce.")
 	name := r["User"][0]
+	if name == "" {
+		return false
+	}
 	user.Name = name
 	verifiedPlainText, err := helper.VerifyCleartextMessageArmored(pubkey, datum, crypto.GetUnixTime())
 	if err != nil {
-		panic(err.Error())
+		return false
 	}
 	if verifiedPlainText != nonce {
 		return false
