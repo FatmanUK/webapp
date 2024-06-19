@@ -62,8 +62,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+	var session string = ""
 	cookie, _ := ReadSessionToken(r)
-	session := cookie.Value
+	if cookie != nil {
+		session = cookie.Value
+	}
 	user := UserFromSessionToken(session)
 	p, err := loadPage(title)
 	if err != nil {
@@ -78,8 +81,11 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
+	var session string = ""
 	cookie, _ := ReadSessionToken(r)
-	session := cookie.Value
+	if cookie != nil {
+		session = cookie.Value
+	}
 	user := UserFromSessionToken(session)
 	if user.Name == "" {
 		denyAuthReqd(w, r)
@@ -116,8 +122,11 @@ func denyUnauthorised(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+	var session string = ""
 	cookie, _ := ReadSessionToken(r)
-	session := cookie.Value
+	if cookie != nil {
+		session = cookie.Value
+	}
 	user := UserFromSessionToken(session)
 	if user.Name == "" {
 		denyAuthReqd(w, r)
@@ -135,8 +144,11 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
+	var session string = ""
 	cookie, _ := ReadSessionToken(r)
-	session := cookie.Value
+	if cookie != nil {
+		session = cookie.Value
+	}
 	user := UserFromSessionToken(session)
 	log.Output(1, "Debug tool accessed.")
 	template := "debug"
@@ -151,8 +163,11 @@ func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request, a string) {
+	var session string = ""
 	cookie, _ := ReadSessionToken(r)
-	session := cookie.Value
+	if cookie != nil {
+		session = cookie.Value
+	}
 	user := UserFromSessionToken(session)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
