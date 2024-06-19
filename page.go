@@ -11,7 +11,7 @@ type Page struct {
 	Body    []byte
 }
 
-func (re Page) debugOutput() string {
+func (re Page) Debug() string {
 	output := `
 ## Pages
 ___`

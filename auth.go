@@ -85,7 +85,6 @@ func isVerifiedPgpClearSignature(r url.Values, user *User, pubkey string) bool {
 	if name == "" {
 		return false
 	}
-	user.Name = name
 	verifiedPlainText, err := helper.VerifyCleartextMessageArmored(pubkey, datum, crypto.GetUnixTime())
 	if err != nil {
 		return false
@@ -94,8 +93,6 @@ func isVerifiedPgpClearSignature(r url.Values, user *User, pubkey string) bool {
 		return false
 	}
 	if err == nil {
-		user.Name = name
-		user.authorise()
 		return true
 	}
 	return false

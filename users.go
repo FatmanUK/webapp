@@ -1,82 +1,96 @@
 package main
 
 import (
-	"net/http"
-	"errors"
-	"time"
+	"gorm.io/gorm"
+	"github.com/glebarez/sqlite" // pure Go?
+	"strings"
 	"github.com/kjk/betterguid"
 )
 
+var errNoUserFound = "user data not found"
+
 type User struct {
 	Name string
-	Groups []string
-	Nonce string // for login, nil after one use
-	Session string // session identifier
+	Nick string
+	Groups string
+	Nonce string `gorm:"-"`
+	Session string `gorm:"-"`
 }
 
 var sessions map[string]*User = map[string]*User{}
 
-func (re User) debugOutput() string {
+var userDb *gorm.DB
+
+func UserFromSessionToken(session string) (*User) {
+	u, exists := sessions[session]
+	if ! exists {
+		return &User{}
+	}
+	return u
+}
+
+func (*User) OpenDatabase() {
+	dbfile := "users.db"
+	d, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	userDb = d
+	userDb.AutoMigrate(&User{})
+}
+
+func (re *User) Authorise(name string) {
+	err := re.Load(name)
+	// anything else?
+	if err != nil {
+		panic(errNoUserFound)
+	}
+}
+
+func (re User) Debug() string {
 	output := `
 ## Sessions`
 	for k, _ := range sessions {
 		output += `
     Session:      ` + k + `  
     User.Name:    ` + sessions[k].Name + `  
+    User.Nick:    ` + sessions[k].Nick + `  
+    User.Groups:  ` + sessions[k].Groups + `  
     User.Session: ` + sessions[k].Session + `  
     User.Nonce:   ` + sessions[k].Nonce
-		for _, v := range sessions[k].Groups {
-			output += `
-    User.Group:   ` + v
-		}
 	}
 	output += `
 ___`
 	return output
 }
 
-func (re *User) authorise() {
-	// TODO: do something with user
-	// get groups
-	re.Groups = []string{"authors"}
+func (re *User) Load(name string) error {
+	result := db.Where("name = ?", name).First(re)
+	return result.Error
 }
 
-func userFromCookie(r *http.Request) (*User, error) {
-	c, err := r.Cookie("session_token")
-	if err == nil {
-		return sessions[c.Value], nil
+func (re *User) IsGroupMember(group string) bool {
+	v := strings.Split(re.Groups, ";")
+	for _, g := range v {
+		if g == group {
+			return true
+		}
 	}
-	return nil, errors.New("There Is No Cookie")
+	return false
 }
 
-func userLogout(session string, w http.ResponseWriter) {
-	delete(sessions, session)
-	expiry := time.Now().Add(-24 * time.Hour)
-	cookie := &http.Cookie{
-		Name:   "session_token",
-		Value:  session,
-		Path:   "/",
-		MaxAge: -1,
-		Expires: expiry,
-		SameSite: http.SameSiteLaxMode }
-	http.SetCookie(w, cookie)
+func (re *User) Logout() {
+	delete(sessions, re.Session)
 }
 
-func userLogin(session string, w http.ResponseWriter) *User {
-	delete(sessions, session)
-	session = betterguid.New()
-	user := &User{Session: session, Nonce: betterguid.New()}
-	for user.Session == user.Nonce {
-		user.Nonce = betterguid.New()
+func (re *User) Login() {
+	delete(sessions, re.Session)
+	re.Session = betterguid.New()
+	re.Nonce = betterguid.New()
+	// bug in betterguid, sometimes produces the same value
+	for re.Session == re.Nonce {
+		re.Nonce = betterguid.New()
 	}
-	sessions[session] = user
-	expiry := time.Now().Add(24 * time.Hour)
-	cookie := &http.Cookie{
-		Name: "session_token",
-		Value:   session,
-		Expires: expiry,
-		Path: "/",
-		SameSite: http.SameSiteLaxMode }
-	http.SetCookie(w, cookie)
-	return user
+	sessions[re.Session] = re
+
 }
