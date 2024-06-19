@@ -15,7 +15,7 @@ windowsd.exe
 keys/
 tls/
 webapp.cfg
-webapp.db
+*.db
 
 # Local garbage
 notes/
