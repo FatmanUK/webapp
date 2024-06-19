@@ -65,7 +65,7 @@ ___`
 }
 
 func (re *User) Load(name string) error {
-	result := db.Where("name = ?", name).First(re)
+	result := userDb.Where("name = ?", name).First(re)
 	return result.Error
 }
 

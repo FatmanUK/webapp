@@ -1,4 +1,4 @@
 # {{.Page.Title}}
-{{range $g := .User.Groups}}{{if eq $g "authors"}}[edit](/edit/{{$.Page.Title}}){{end}}{{end}}
+{{if .User.IsGroupMember "authors"}}[edit](/edit/{{$.Page.Title}}){{end}}
 ___
 {{printf "%s" .Page.Body}}
