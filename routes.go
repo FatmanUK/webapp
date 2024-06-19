@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"slices"
+	"time"
 )
 
 type View struct {
@@ -12,7 +12,7 @@ type View struct {
 	User User
 }
 
-func (re View) debugOutput() string {
+func (re View) Debug() string {
 	output := `
 ## View
 ___`
@@ -51,13 +51,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
-	user, _ := userFromCookie(r)
-	if user == nil {
-		user = &User{}
-	}
+	cookie, _ := ReadSessionToken(r)
+	session := cookie.Value
+	user := UserFromSessionToken(session)
 	p, err := loadPage(title)
 	if err != nil {
-		if ! slices.Contains(user.Groups, "authors") {
+		if user.IsGroupMember("authors") {
 			denyNotFound(w, r)
 			return
 		}
@@ -68,15 +67,14 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request, title string) {
-	user, _ := userFromCookie(r)
-	if user == nil {
-		user = &User{}
-	}
+	cookie, _ := ReadSessionToken(r)
+	session := cookie.Value
+	user := UserFromSessionToken(session)
 	if user.Name == "" {
 		denyAuthReqd(w, r)
 		return
 	}
-	if ! slices.Contains(user.Groups, "authors") {
+	if user.IsGroupMember("authors") {
 		denyUnauthorised(w, r)
 		return
 	}
@@ -107,15 +105,14 @@ func denyUnauthorised(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
-	user, _ := userFromCookie(r)
-	if user == nil {
-		user = &User{}
-	}
+	cookie, _ := ReadSessionToken(r)
+	session := cookie.Value
+	user := UserFromSessionToken(session)
 	if user.Name == "" {
 		denyAuthReqd(w, r)
 		return
 	}
-	if ! slices.Contains(user.Groups, "authors") {
+	if user.IsGroupMember("authors") {
 		denyUnauthorised(w, r)
 		return
 	}
@@ -127,32 +124,31 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
-	user, _ := userFromCookie(r)
-	if user == nil {
-		user = &User{}
-	}
+	cookie, _ := ReadSessionToken(r)
+	session := cookie.Value
+	user := UserFromSessionToken(session)
 	log.Output(1, "Debug tool accessed.")
 	template := "debug"
 	p := Page{Title: "Debug"}
 	// TODO: improve this?
-	output := User{}.debugOutput()
+	output := User{}.Debug()
 	output += c.debugOutput()
-	output += Page{}.debugOutput()
-	output += View{}.debugOutput()
+	output += Page{}.Debug()
+	output += View{}.Debug()
 	p.Body = []byte(output)
 	renderTemplate(w, template, &View{Page: &p, User: *user})
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request, a string) {
-	user, _ := userFromCookie(r)
-	if user == nil {
-		user = &User{}
-	}
+	cookie, _ := ReadSessionToken(r)
+	session := cookie.Value
+	user := UserFromSessionToken(session)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
 	if a == "login" {
 		template = "userLogin"
-		user = userLogin(user.Session, w)
+		user.Login()
+		SetCookie(w, 1, user.Session)
 		p.Title = "Login"
 		log.Output(1, "Login attempt.")
 	}
@@ -160,10 +156,12 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		template = "userLoginFailed"
 		p.Title = "Access Denied"
 		r.ParseForm()
-		pubkey := loadTextFile(c.GetString("keys_dir") + "/" + r.PostForm["User"][0] + ".asc")
+		name := r.PostForm["User"][0]
+		pubkey := loadTextFile(c.GetString("keys_dir") + "/" + name + ".asc")
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
 			template = "userWelcome"
 			p.Title = "Hello"
+			user.Authorise(name)
 			log.Output(1, "Login successful.")
 		} else {
 			log.Output(1, "Login failed.")
@@ -172,10 +170,30 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 	if a == "logout" {
 		template = "userLogout"
 		p.Title = "Logout"
-		userLogout(user.Session, w)
+		user.Logout()
+		SetCookie(w, -1, "")
 		log.Output(1, "Logout by user")
 	}
 	renderTemplate(w, template, &View{Page: &p, User: *user})
+}
+
+func SetCookie(w http.ResponseWriter, i int, session string) {
+	now := time.Now()
+	offset := 24 * time.Duration(i) * time.Hour
+	expiry := now.Add(offset)
+	cookie := &http.Cookie{
+		Name: "session_token",
+		Value: session,
+		MaxAge: i * 86400,
+		Path: "/",
+		Expires: expiry,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, cookie)
+}
+
+func ReadSessionToken(r *http.Request) (*http.Cookie, error) {
+	return r.Cookie("session_token")
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
