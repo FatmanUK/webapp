@@ -11,6 +11,10 @@ type Page struct {
 	Body    []byte
 }
 
+func (re *Page) OpenDatabase() *int {
+	return &int{}
+}
+
 func (re Page) Debug() string {
 	output := `
 ## Pages

@@ -4,8 +4,11 @@ import (
 	"log"
 	"net/http"
 	"regexp"
-	"time"
 	"strings"
+	"slices"
+	"errors"
+	"time"
+	"github.com/kjk/betterguid"
 )
 
 type View struct {
@@ -231,4 +234,45 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 		}
 		fn(w, r, m[2])
 	}
+}
+
+
+func userFromCookie(r *http.Request) (*User, error) {
+	c, err := r.Cookie("session_token")
+	if err == nil {
+		return sessions[c.Value], nil
+	}
+	return nil, errors.New("There Is No Cookie")
+}
+
+func userLogout(session string, w http.ResponseWriter) {
+	delete(sessions, session)
+	expiry := time.Now().Add(-24 * time.Hour)
+	cookie := &http.Cookie{
+		Name:   "session_token",
+		Value:  session,
+		Path:   "/",
+		MaxAge: -1,
+		Expires: expiry,
+		SameSite: http.SameSiteLaxMode }
+	http.SetCookie(w, cookie)
+}
+
+func userLogin(session string, w http.ResponseWriter) *User {
+	delete(sessions, session)
+	session = betterguid.New()
+	user := &User{Session: session, Nonce: betterguid.New()}
+	for user.Session == user.Nonce {
+		user.Nonce = betterguid.New()
+	}
+	sessions[session] = user
+	expiry := time.Now().Add(24 * time.Hour)
+	cookie := &http.Cookie{
+		Name: "session_token",
+		Value:   session,
+		Expires: expiry,
+		Path: "/",
+		SameSite: http.SameSiteLaxMode }
+	http.SetCookie(w, cookie)
+	return user
 }

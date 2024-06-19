@@ -15,3 +15,8 @@ ifeq (@(OS), "windows")
 else
 	run ./embed.bash "$(LDFLAGS)"
 endif
+
+# how to?
+#: @(BINARY) |> go test . -v -count=1 >test.txt |> test.txt
+# for now, test manually
+# -benchtime, -cpu, -list, -parallel, -run, -short, -timeout, -failfast

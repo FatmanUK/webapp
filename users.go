@@ -17,6 +17,10 @@ type User struct {
 	Session string `gorm:"-"`
 }
 
+func (re *User) OpenDatabase() *int {
+	return &int{}
+}
+
 var sessions map[string]*User = map[string]*User{}
 
 var userDb *gorm.DB

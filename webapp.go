@@ -1,21 +1,33 @@
 package main
 
 import (
-	"log"
 	"os"
 	"github.com/FatmanUK/fatgo/mktls"
 	"encoding/base64"
+//	"log"
+//	"errors"
 )
 
-func fileExists(name string) error {
-	_, err := os.Stat(name)
-	if os.IsNotExist(err) {
-		return err
-	}
-	return nil
+var BUILD_COMMAND_B64 string
+var BUILD_MODE string
+
+var CONFIG_FILE string
+var WEB_PORT string
+var WEB_HOME string
+var DB_PAGES string
+var DB_USERS string
+var TLS_KEY string
+var TLS_CERT string
+var AUTH_KEYS_DIR string
+
+var errNoWriteConf = "Couldn't write config"
+
+type TlsHandler struct {
 }
 
-func createTls() {
+func (*TlsHandler) GenerateSelfSignedCertificate(
+		key string,
+		crt string) {
 	// path must exist
 	key_path := c.GetString("tls.key")
 	cert_path := c.GetString("tls.crt")
@@ -49,9 +61,10 @@ func createTls() {
 	}
 }
 
-var c = &JsonConfig{
-	CONFDIR + "/webapp.cfg",
-	make(map[string]string)}
+//var c = &JsonConfig{
+//		CONFDIR + "/webapp.cfg",
+//		make(map[string]string),
+//	}
 
 // must set these with build options
 var APPNAME string
@@ -64,7 +77,17 @@ var BUILD_MODE string
 var BUILD_COMMAND_B64 string
 var BUILD_COMMAND string
 
-func defaults() {
+type WebRouter struct {
+}
+
+func (re *WebRouter) CreateRoutes() {
+}
+
+func (re *WebRouter) Run() error {
+	return nil
+}
+
+func setDefaults(c *JsonConfig) {
 	c.SetString("web.appname", APPNAME)
 	c.SetString("web.port", PORT)
 	c.SetString("web.home", HOME)
@@ -74,28 +97,46 @@ func defaults() {
 	c.SetString("tls.crt", CONFDIR + "/tls/tls.crt")
 	c.SetString("keys_dir", DATADIR + "/keys")
 	c.SetString("static_dir", DATADIR + "/static")
-	if ! c.FileExists() {
-		c.Save()
+	if ! fileExists(c.File) {
+		mode := os.O_CREATE | os.O_WRONLY
+		f, err := os.OpenFile(c.File, mode, os.ModePerm)
+		defer f.Close()
+		if err != nil {
+			panic(errNoWriteConf)
+		}
+		c.Save(f)
 	}
 }
 
 func main() {
-	defaults()
-	c.Load()
-
-	decoded, err := base64.StdEncoding.DecodeString(BUILD_COMMAND_B64)
+	f, err := os.Open(CONFIG_FILE)
+	defer f.Close()
 	if err != nil {
-		panic(err.Error())
+		panic("Conf file not found")
 	}
-	BUILD_COMMAND = string(decoded)
-	log.Output(0, "Compile args: " + BUILD_COMMAND)
+	c := (&JsonConfig{}).Init(CONFIG_FILE)
+	setDefaults(c)
+	c.Load(f)
 
 	(&Template{}).Init()
 	(&User{}).OpenDatabase()
 	openDatabase()
-	createTls()
-	createRoutes()
-	err = run()
+
+	buildcmd := b64decode(BUILD_COMMAND_B64)
+	log.Output(1, "Compile args: " + buildcmd)
+
+	p := (&Page{}).OpenDatabase()
+	u := (&User{}).OpenDatabase()
+
+	(&TlsHandler{}).GenerateSelfSignedCertificate(
+		c.GetString("web.tls.key"),
+		c.GetString("web.tls.crt"),
+	)
+
+	w := &WebRouter{}
+	w.CreateRoutes()
+	err = w.Run()
+
 	if err != nil {
 		log.Fatal(err)
 	}
