@@ -36,6 +36,8 @@ var defaultTlsKey string
 var defaultTlsCrt string
 var defaultFirstPage string
 var defaultKeysDir string
+var defaultStaticDir string
+var appName string
 
 var c = &JsonConfig{
 	configFile,
@@ -46,12 +48,14 @@ var BUILD_COMMAND_B64 string
 var BUILD_COMMAND string
 
 func defaults() {
+	c.SetString("web.appname", appName)
 	c.SetString("web.port", defaultWebPort)
 	c.SetString("web.first_page", defaultFirstPage)
 	c.SetString("db.file", databaseFile)
 	c.SetString("tls.key", defaultTlsKey)
 	c.SetString("tls.crt", defaultTlsCrt)
 	c.SetString("keys_dir", defaultKeysDir)
+	c.SetString("static_dir", defaultStaticDir)
 	if ! c.FileExists() {
 		c.Save()
 	}

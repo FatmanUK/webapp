@@ -5,11 +5,22 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	"strings"
 )
 
 type View struct {
 	Page *Page
 	User User
+}
+
+// for header.html
+func (re *View) GetAppname() string {
+	return c.GetString("web.appname")
+}
+
+// for header.html
+func (re *View) GetIconname() string {
+	return strings.ToLower(c.GetString("web.appname"))
 }
 
 func (re View) Debug() string {
@@ -30,7 +41,7 @@ func createRoutes() {
 	if BUILD_MODE == "Debug" {
 		http.HandleFunc("/debug/", makeHandler(debugHandler))
 	}
-	fs := http.FileServer(http.Dir("static"))
+	fs := http.FileServer(http.Dir(c.GetString("static_dir")))
 	t := http.StripPrefix("/static/", fs)
 	http.Handle("/static/", t)
 	http.HandleFunc("/", handler)
