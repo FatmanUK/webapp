@@ -70,7 +70,7 @@ func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	user := UserFromSessionToken(session)
 	p, err := loadPage(title)
 	if err != nil {
-		if user.IsGroupMember("authors") {
+		if ! user.IsGroupMember("authors") {
 			denyNotFound(w, r)
 			return
 		}
@@ -91,7 +91,7 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 		denyAuthReqd(w, r)
 		return
 	}
-	if user.IsGroupMember("authors") {
+	if ! user.IsGroupMember("authors") {
 		denyUnauthorised(w, r)
 		return
 	}
@@ -132,7 +132,7 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		denyAuthReqd(w, r)
 		return
 	}
-	if user.IsGroupMember("authors") {
+	if ! user.IsGroupMember("authors") {
 		denyUnauthorised(w, r)
 		return
 	}
