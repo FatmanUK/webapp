@@ -2,6 +2,10 @@ module dreamtrack.net/webapp
 
 go 1.22
 
+replace github.com/FatmanUK/fatgo/mktls => ./fatgo/mktls
+
+require github.com/FatmanUK/fatgo/mktls v0.0.0
+
 require (
 	github.com/ProtonMail/gopenpgp/v2 v2.7.5
 	github.com/glebarez/sqlite v1.11.0
