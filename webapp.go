@@ -93,10 +93,11 @@ func setDefaults(c *JsonConfig) {
 	c.SetString("web.home", HOME)
 	c.SetString("db.content", DATADIR + "/content.db")
 	c.SetString("db.users", DATADIR + "/users.db")
-	c.SetString("tls.key", CONFDIR + "/tls/tls.key")
-	c.SetString("tls.crt", CONFDIR + "/tls/tls.crt")
-	c.SetString("keys_dir", DATADIR + "/keys")
-	c.SetString("static_dir", DATADIR + "/static")
+	c.SetString("web.tls.key", CONFDIR + "/tls/tls.key")
+	c.SetString("web.tls.crt", CONFDIR + "/tls/tls.crt")
+	c.SetString("auth.keys_dir", DATADIR + "/keys")
+	c.SetString("web.static_dir", DATADIR + "/static")
+
 	if ! fileExists(c.File) {
 		mode := os.O_CREATE | os.O_WRONLY
 		f, err := os.OpenFile(c.File, mode, os.ModePerm)
@@ -112,7 +113,7 @@ func main() {
 	f, err := os.Open(CONFIG_FILE)
 	defer f.Close()
 	if err != nil {
-		panic("Conf file not found")
+		panic(errNoReadConf)
 	}
 	c := (&JsonConfig{}).Init(CONFIG_FILE)
 	setDefaults(c)
@@ -133,7 +134,7 @@ func main() {
 		c.GetString("web.tls.crt"),
 	)
 
-	w := &WebRouter{}
+	w := &WebRouter{ Config: c }
 	w.CreateRoutes()
 	err = w.Run()
 

@@ -17,21 +17,9 @@ type User struct {
 	Session string `gorm:"-"`
 }
 
-func (re *User) OpenDatabase() *int {
-	return &int{}
-}
-
 var sessions map[string]*User = map[string]*User{}
 
 var userDb *gorm.DB
-
-func UserFromSessionToken(session string) (*User) {
-	u, exists := sessions[session]
-	if ! exists {
-		return &User{}
-	}
-	return u
-}
 
 func (*User) OpenDatabase() {
 	dbfile := c.GetString("db.users")
@@ -41,6 +29,14 @@ func (*User) OpenDatabase() {
 	}
 	userDb = d
 	userDb.AutoMigrate(&User{})
+}
+
+func UserFromSessionToken(session string) (*User) {
+	u, exists := sessions[session]
+	if ! exists {
+		return &User{}
+	}
+	return u
 }
 
 func (re *User) Authorise(name string) {
