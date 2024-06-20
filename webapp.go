@@ -70,6 +70,7 @@ func main() {
 	log.Output(0, "Compile args: " + BUILD_COMMAND)
 
 	(&Template{}).Init()
+	(&User{}).OpenDatabase()
 	openDatabase()
 	createTls()
 	createRoutes()
