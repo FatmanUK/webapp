@@ -69,6 +69,7 @@ func main() {
 	BUILD_COMMAND = string(decoded)
 	log.Output(0, "Compile args: " + BUILD_COMMAND)
 
+	(&Template{}).Init()
 	openDatabase()
 	createTls()
 	createRoutes()
