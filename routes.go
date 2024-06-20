@@ -57,7 +57,7 @@ func run() error {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	url := "/view/" + c.GetString("web.first_page")
+	url := "/view/" + c.GetString("web.home")
 	http.Redirect(w, r, url, http.StatusFound)
 }
 

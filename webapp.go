@@ -28,34 +28,31 @@ func createTls() {
 	//mktls.CreateCrt(conf.tls.key, conf.tls.crt)
 }
 
-// must set these with build options
-var configFile string
-var databaseFile string
-var defaultWebPort string
-var defaultTlsKey string
-var defaultTlsCrt string
-var defaultFirstPage string
-var defaultKeysDir string
-var defaultStaticDir string
-var appName string
-
 var c = &JsonConfig{
-	configFile,
+	CONFDIR + "/webapp.cfg",
 	make(map[string]string)}
+
+// must set these with build options
+var APPNAME string
+var HOME string
+var PORT string
+var CONFDIR string
+var DATADIR string
 
 var BUILD_MODE string
 var BUILD_COMMAND_B64 string
 var BUILD_COMMAND string
 
 func defaults() {
-	c.SetString("web.appname", appName)
-	c.SetString("web.port", defaultWebPort)
-	c.SetString("web.first_page", defaultFirstPage)
-	c.SetString("db.file", databaseFile)
-	c.SetString("tls.key", defaultTlsKey)
-	c.SetString("tls.crt", defaultTlsCrt)
-	c.SetString("keys_dir", defaultKeysDir)
-	c.SetString("static_dir", defaultStaticDir)
+	c.SetString("web.appname", APPNAME)
+	c.SetString("web.port", PORT)
+	c.SetString("web.home", HOME)
+	c.SetString("db.content", DATADIR + "/content.db")
+	c.SetString("db.users", DATADIR + "/users.db")
+	c.SetString("tls.key", CONFDIR + "/tls/tls.key")
+	c.SetString("tls.crt", CONFDIR + "/tls/tls.crt")
+	c.SetString("keys_dir", DATADIR + "/keys")
+	c.SetString("static_dir", DATADIR + "/static")
 	if ! c.FileExists() {
 		c.Save()
 	}

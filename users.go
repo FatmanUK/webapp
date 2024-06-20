@@ -30,7 +30,7 @@ func UserFromSessionToken(session string) (*User) {
 }
 
 func (*User) OpenDatabase() {
-	dbfile := "users.db"
+	dbfile := c.GetString("db.users")
 	d, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
