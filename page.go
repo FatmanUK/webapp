@@ -21,7 +21,7 @@ ___`
 var db *gorm.DB
 
 func openDatabase() {
-	dbfile := c.GetString("db.file")
+	dbfile := c.GetString("db.content")
 	d, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())

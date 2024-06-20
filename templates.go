@@ -6,18 +6,24 @@ import (
 	"bytes"
 )
 
-// https://go.dev/doc/articles/wiki/
+type Template struct {
+	Name string
+}
 
-var templates = template.Must(template.ParseFiles(
-	"templates/edit.html",
-	"templates/view.html",
-	"templates/debug.html",
-	"templates/userDefault.html",
-	"templates/userLogin.html",
-	"templates/userLoginFailed.html",
-	"templates/userWelcome.html",
-	"templates/header.html",
-	"templates/footer.html"))
+var errNoLoadTemplates = "Loading templates failed"
+
+var templates *template.Template
+
+func (*Template) Init() {
+	glob, err := template.ParseGlob("./templates/*.html")
+	if err != nil {
+		panic(err.Error())
+	}
+	templates = template.Must(glob, err)
+	if templates == nil {
+		panic(errNoLoadTemplates)
+	}
+}
 
 func captureTemplate(tmpl string, p interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
