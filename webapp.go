@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-//	"fatgo/mktls"
+	"github.com/FatmanUK/fatgo/mktls"
 	"encoding/base64"
 )
 
@@ -17,15 +17,36 @@ func fileExists(name string) error {
 
 func createTls() {
 	// path must exist
-	key_is := (nil == fileExists(c.GetString("tls.key")))
-	crt_is := (nil == fileExists(c.GetString("tls.crt")))
+	key_path := c.GetString("tls.key")
+	cert_path := c.GetString("tls.crt")
+	key_is := (nil == fileExists(key_path))
+	crt_is := (nil == fileExists(cert_path))
 	if crt_is && key_is {
 		return
 	}
-	if !key_is {
-		//mktls.CreateKey(conf.tls.key)
+//	if !key_is {
+//		mktls.CreateKey(conf.tls.key)
+//	}
+//	mktls.CreateCrt(conf.tls.key, conf.tls.crt)
+	k := (&mktls.TlsKey{}).GenerateKey()
+	c := k.GenerateCertificate()
+
+	if !key_is || !crt_is {
+		mode := os.O_CREATE|os.O_WRONLY|os.O_TRUNC
+		kf, err := os.OpenFile(key_path, mode, os.ModePerm)
+		defer kf.Close()
+		if err != nil {
+			panic("Couldn't write key file")
+		}
+		kf.Write(k.PemBytes.Bytes())
+
+		cf, err := os.OpenFile(cert_path, mode, os.ModePerm)
+		defer cf.Close()
+		if err != nil {
+			panic("Couldn't write cert file")
+		}
+		cf.Write(c.PemBytes.Bytes())
 	}
-	//mktls.CreateCrt(conf.tls.key, conf.tls.crt)
 }
 
 var c = &JsonConfig{
