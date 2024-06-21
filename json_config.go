@@ -4,41 +4,16 @@ import (
 	"os"
 	"strconv"
 	"encoding/json"
-	"errors"
 )
+
+type JsonOperator interface {
+	operate(*JsonConfig, *os.File)
+}
 
 type JsonSaver struct {
 }
 
-func (*JsonSaver) operate(file string, j *map[string]string) {
-	mode := os.O_CREATE|os.O_WRONLY
-	f, err := os.OpenFile(file, mode, os.ModePerm)
-	defer f.Close()
-	if err != nil {
-		panic("Conf file not found")
-	}
-	encoder := json.NewEncoder(f)
-	encoder.Encode(j)
-}
-
 type JsonLoader struct {
-}
-
-func (*JsonLoader) operate(file string, j *map[string]string) {
-	f, err := os.Open(file)
-	defer f.Close()
-	if err != nil {
-		panic("Conf file not found")
-	}
-	decoder := json.NewDecoder(f)
-	err = decoder.Decode(j)
-	if err != nil {
-		panic("Decoding failed")
-	}
-}
-
-type JsonOperator interface {
-	operate(string, *map[string]string)
 }
 
 type JsonConfig struct {
@@ -46,22 +21,36 @@ type JsonConfig struct {
 	values map[string]string
 }
 
-func (re JsonConfig) debugOutput() string {
+func (*JsonSaver) operate(j *JsonConfig, f *os.File) {
+	encoder := json.NewEncoder(f)
+	encoder.Encode(j.values)
+}
+
+func (*JsonLoader) operate(j *JsonConfig, f *os.File) {
+	decoder := json.NewDecoder(f)
+	err := decoder.Decode(j)
+	if err != nil {
+		panic(errDecoding)
+	}
+}
+
+func (re *JsonConfig) Init(file string) *JsonConfig {
+	re.file = file
+	re.values = make(map[string]string)
+	return re
+}
+
+func (re *JsonConfig) Debug() string {
 	output := `
 ## Config
 ___`
 	return output
 }
 
-func (re *JsonConfig) FileExists() bool {
-	_, err := os.Stat(re.file)
-	return ! errors.Is(err, os.ErrNotExist)
-}
-
 func (re *JsonConfig) GetString(key string) string {
 	val, isExists := re.values[key]
 	if !isExists {
-		panic("No such key: " + key)
+		panic(errConfigKey + ": " + key)
 	}
 	return val
 }
@@ -91,7 +80,7 @@ func (re *JsonConfig) GetBool(key string) bool {
 			"no", "NO", "No":
 			return false
 		default:
-			panic("Couldn't coerce boolean: " + val)
+			panic(errBoolCoerce + ": " + val)
 	}
 }
 
@@ -103,14 +92,16 @@ func (re *JsonConfig) SetBool(key string, value bool) {
 	re.SetString(key, val)
 }
 
-func (re *JsonConfig) operate(j JsonOperator) {
-	j.operate(re.file, &(re.values))
+func (re *JsonConfig) operate(j JsonOperator, f *os.File) {
+	j.operate(re, f)
 }
 
-func (re *JsonConfig) Save() {
-	re.operate(&JsonSaver{})
+func (re *JsonConfig) Save(f *os.File) {
+	j := &JsonSaver{}
+	j.operate(re, f)
 }
 
-func (re *JsonConfig) Load() {
-	re.operate(&JsonLoader{})
+func (re *JsonConfig) Load(f *os.File) {
+	j := &JsonLoader{}
+	j.operate(re, f)
 }

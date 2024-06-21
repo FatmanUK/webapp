@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"net/url"
 	"regexp"
 	"strings"
@@ -34,14 +33,6 @@ func isGoodHash(hash string) bool {
 		}
 	}
 	return true
-}
-
-func loadTextFile(file string) string {
-	b, err := os.ReadFile(file)
-	if err != nil {
-		panic(err.Error())
-	}
-	return string(b)
 }
 
 func isSameNonce(nonceFromUser string, msg string) bool {

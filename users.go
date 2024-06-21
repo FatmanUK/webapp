@@ -7,8 +7,6 @@ import (
 	"github.com/kjk/betterguid"
 )
 
-var errNoUserFound = "user data not found"
-
 type User struct {
 	Name string
 	Nick string
@@ -21,16 +19,7 @@ var sessions map[string]*User = map[string]*User{}
 
 var userDb *gorm.DB
 
-func UserFromSessionToken(session string) (*User) {
-	u, exists := sessions[session]
-	if ! exists {
-		return &User{}
-	}
-	return u
-}
-
-func (*User) OpenDatabase() {
-	dbfile := c.GetString("db.users")
+func (*User) OpenDatabase(dbfile string) {
 	d, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -39,11 +28,19 @@ func (*User) OpenDatabase() {
 	userDb.AutoMigrate(&User{})
 }
 
+func UserFromSessionToken(session string) *User {
+	u, exists := sessions[session]
+	if ! exists {
+		return &User{}
+	}
+	return u
+}
+
 func (re *User) Authorise(name string) {
 	err := re.Load(name)
 	// anything else?
 	if err != nil {
-		panic(errNoUserFound)
+		panic(errLoadUser)
 	}
 }
 
@@ -92,5 +89,4 @@ func (re *User) Login() {
 		re.Nonce = betterguid.New()
 	}
 	sessions[re.Session] = re
-
 }

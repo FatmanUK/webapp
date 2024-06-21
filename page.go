@@ -11,7 +11,7 @@ type Page struct {
 	Body    []byte
 }
 
-func (re Page) Debug() string {
+func (re *Page) Debug() string {
 	output := `
 ## Pages
 ___`
@@ -20,8 +20,7 @@ ___`
 
 var db *gorm.DB
 
-func openDatabase() {
-	dbfile := c.GetString("db.content")
+func (re *Page) OpenDatabase(dbfile string) {
 	d, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
@@ -30,12 +29,11 @@ func openDatabase() {
 	db.AutoMigrate(&Page{})
 }
 
-func loadPage(title string) (*Page, error) {
-	var p = &Page{}
-	result := db.Where("title = ?", title).Last(&p)
-	return p, result.Error
+func (re *Page) LoadPage(title string) error {
+	result := db.Where("title = ?", title).Last(re)
+	return result.Error
 }
 
-func (p *Page) save() {
-	db.Create(p)
+func (re *Page) Save() {
+	db.Create(re)
 }
