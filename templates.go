@@ -1,6 +1,7 @@
 package main
 
 import (
+//	"fmt"
 	"net/http"
 	"text/template"
 	"bytes"
@@ -10,19 +11,18 @@ type Template struct {
 	Name string
 }
 
-var errNoLoadTemplates = "Loading templates failed"
-
 var templates *template.Template
 
-func (*Template) Init() {
-	glob, err := template.ParseGlob("./templates/*.html")
+func (*Template) Init(path string) {
+	glob, err := template.ParseGlob(path + "/*.html")
 	if err != nil {
 		panic(err.Error())
 	}
 	templates = template.Must(glob, err)
 	if templates == nil {
-		panic(errNoLoadTemplates)
+		panic(errLoadTemplates)
 	}
+//	fmt.Println(templates.DefinedTemplates())
 }
 
 func captureTemplate(tmpl string, p interface{}) ([]byte, error) {

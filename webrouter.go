@@ -1,43 +1,43 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"strings"
+	"regexp"
+	"time"
 )
+
+// See also:
+// https://go.dev/doc/articles/wiki/
+
+var validPath = regexp.MustCompile(pathRe)
+var pathRe = "^/(edit|save|view|user|debug)/([a-zA-Z0-9]+)$"
 
 type WebRouter struct {
 	Config *JsonConfig
 }
 
-type View struct {
-	Page *Page
-	User User
-}
-
-func (re *WebRouter) CreateRoutes() {
-	http.HandleFunc("/view/", makeHandler(viewHandler))
-	http.HandleFunc("/edit/", makeHandler(editHandler))
-	http.HandleFunc("/save/", makeHandler(saveHandler))
-	http.HandleFunc("/user/", makeHandler(userHandler))
+func (re *WebRouter) Run() error {
+	// create routes
+	http.HandleFunc("/view/", makeHandler(re.viewHandler))
+	http.HandleFunc("/edit/", makeHandler(re.editHandler))
+	http.HandleFunc("/save/", makeHandler(re.saveHandler))
+	http.HandleFunc("/user/", makeHandler(re.userHandler))
 	if BUILD_MODE == "Debug" {
-		http.HandleFunc("/debug/", makeHandler(debugHandler))
+		http.HandleFunc("/debug/", makeHandler(re.debugHandler))
 	}
 	dir := re.Config.GetString("web.static_dir")
 	fs := http.FileServer(http.Dir(dir))
 	t := http.StripPrefix("/static/", fs)
 	http.Handle("/static/", t)
-	http.HandleFunc("/", handler)
-}
+	http.HandleFunc("/", re.defaultHandler)
 
-func (re *WebRouter) Run(c *JsonConfig) error {
+	// run server
 	port := re.Config.GetString("web.port")
-	key := re.Config.GetString("tls.key")
-	cert := re.Config.GetString("tls.crt")
+	key := re.Config.GetString("web.tls.key")
+	cert := re.Config.GetString("web.tls.crt")
 	return http.ListenAndServeTLS(":" + port, cert, key, nil)
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	url := "/view/" + c.GetString("web.home")
-	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
@@ -51,26 +51,34 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) defaultHandler(w http.ResponseWriter, r *http.Request) {
+	url := "/view/" + re.Config.GetString("web.home")
+	http.Redirect(w, r, url, http.StatusFound)
+
+}
+
+func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
 		session = cookie.Value
 	}
 	user := UserFromSessionToken(session)
-	p, err := loadPage(title)
+	p := &Page{}
+	err := p.LoadPage(title)
 	if err != nil {
-		if user.IsGroupMember("authors") {
+		if ! user.IsGroupMember("authors") {
 			denyNotFound(w, r)
 			return
 		}
 		http.Redirect(w, r, "/edit/" + title, http.StatusFound)
 		return
 	}
-	renderTemplate(w, "view", &View{Page: p, User: *user})
+	v := &View{Config: re.Config, Page: p, User: *user}
+	renderTemplate(w, "view", v)
 }
 
-func editHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -81,19 +89,22 @@ func editHandler(w http.ResponseWriter, r *http.Request, title string) {
 		denyAuthReqd(w, r)
 		return
 	}
-	if user.IsGroupMember("authors") {
+	if ! user.IsGroupMember("authors") {
 		denyUnauthorised(w, r)
 		return
 	}
 	log.Output(1, "Editing " + title + ".")
-	p, err := loadPage(title)
+
+	p := &Page{}
+	err := p.LoadPage(title)
 	if err != nil {
-		p = &Page{Title: title}
+		p.Title = title
 	}
-	renderTemplate(w, "edit", &View{Page: p, User: *user})
+	v := &View{Config: re.Config, Page: p, User: *user}
+	renderTemplate(w, "edit", v)
 }
 
-func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -104,18 +115,18 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 		denyAuthReqd(w, r)
 		return
 	}
-	if user.IsGroupMember("authors") {
+	if ! user.IsGroupMember("authors") {
 		denyUnauthorised(w, r)
 		return
 	}
 	log.Output(1, "Saving " + title + ".")
 	body := r.FormValue("body")
 	p := &Page{Title: title, Body: []byte(body)}
-	p.save()
+	p.Save()
 	http.Redirect(w, r, "/view/" + title, http.StatusFound)
 }
 
-func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) debugHandler(w http.ResponseWriter, r *http.Request, title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -127,14 +138,15 @@ func debugHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p := Page{Title: "Debug"}
 	// TODO: improve this?
 	output := User{}.Debug()
-	output += c.debugOutput()
-	output += Page{}.Debug()
+	output += re.Config.Debug()
+	output += (&p).Debug()
 	output += View{}.Debug()
 	p.Body = []byte(output)
-	renderTemplate(w, template, &View{Page: &p, User: *user})
+	v := &View{Config: re.Config, Page: &p, User: *user}
+	renderTemplate(w, template, v)
 }
 
-func userHandler(w http.ResponseWriter, r *http.Request, a string) {
+func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -155,7 +167,9 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		p.Title = "Access Denied"
 		r.ParseForm()
 		name := r.PostForm["User"][0]
-		pubkey := loadTextFile(c.GetString("keys_dir") + "/" + name + ".asc")
+		keydir := re.Config.GetString("auth.keys_dir")
+		keyfile := keydir + "/" + name + ".asc"
+		pubkey := loadTextFile(keyfile)
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
 			template = "userWelcome"
 			p.Title = "Hello"
@@ -172,17 +186,18 @@ func userHandler(w http.ResponseWriter, r *http.Request, a string) {
 		SetCookie(w, -1, "")
 		log.Output(1, "Logout by user")
 	}
-	renderTemplate(w, template, &View{Page: &p, User: *user})
+	v := &View{Config: re.Config, Page: &p, User: *user}
+	renderTemplate(w, template, v)
 }
 
 // for header.html
 func (re *View) GetAppname() string {
-	return c.GetString("web.appname")
+	return re.Config.GetString("web.appname")
 }
 
 // for header.html
 func (re *View) GetIconname() string {
-	return strings.ToLower(c.GetString("web.appname"))
+	return strings.ToLower(re.Config.GetString("web.appname"))
 }
 
 func (re View) Debug() string {
@@ -192,3 +207,39 @@ ___`
 	return output
 }
 
+func SetCookie(w http.ResponseWriter, i int, session string) {
+	now := time.Now()
+	offset := 24 * time.Duration(i) * time.Hour
+	expiry := now.Add(offset)
+	cookie := &http.Cookie{
+		Name: "session_token",
+		Value: session,
+		MaxAge: i * 86400,
+		Path: "/",
+		Expires: expiry,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, cookie)
+}
+
+func ReadSessionToken(r *http.Request) (*http.Cookie, error) {
+	return r.Cookie("session_token")
+}
+
+func denyNotFound(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/", http.StatusNotFound)
+	log.Output(1, "Not found.")
+}
+
+func denyAuthReqd(w http.ResponseWriter, r *http.Request) {
+	// The "unauthorized" status actually means "unauthenticated".
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+	http.Redirect(w, r, "/", http.StatusUnauthorized)
+	log.Output(1, "Login required.")
+}
+
+func denyUnauthorised(w http.ResponseWriter, r *http.Request) {
+	// We use "Forbidden" to mean "unauthorised".
+	http.Redirect(w, r, "/", http.StatusForbidden)
+	log.Output(1, "Not allowed.")
+}

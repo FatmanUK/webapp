@@ -2,14 +2,9 @@ package main
 
 import (
 	"os"
-	"errors"
 	"strconv"
 	"encoding/json"
 )
-
-var errDecoding = "Decoding failed"
-var errNoKey = "No such key"
-var errNoBoolCoerce = "Couldn't coerce boolean"
 
 type JsonOperator interface {
 	operate(*JsonConfig, *os.File)
@@ -22,13 +17,13 @@ type JsonLoader struct {
 }
 
 type JsonConfig struct {
-	File string
-	Values map[string]string
+	file string
+	values map[string]string
 }
 
 func (*JsonSaver) operate(j *JsonConfig, f *os.File) {
 	encoder := json.NewEncoder(f)
-	encoder.Encode(j.Values)
+	encoder.Encode(j.values)
 }
 
 func (*JsonLoader) operate(j *JsonConfig, f *os.File) {
@@ -40,8 +35,8 @@ func (*JsonLoader) operate(j *JsonConfig, f *os.File) {
 }
 
 func (re *JsonConfig) Init(file string) *JsonConfig {
-	re.File = file
-	re.Values = make(map[string]string)
+	re.file = file
+	re.values = make(map[string]string)
 	return re
 }
 
@@ -53,15 +48,15 @@ ___`
 }
 
 func (re *JsonConfig) GetString(key string) string {
-	val, isExists := re.Values[key]
+	val, isExists := re.values[key]
 	if !isExists {
-		panic(errNoKey + ": " + key)
+		panic(errConfigKey + ": " + key)
 	}
 	return val
 }
 
 func (re *JsonConfig) SetString(key string, value string) {
-	re.Values[key] = value
+	re.values[key] = value
 }
 
 func (re *JsonConfig) GetInt(key string) int {
@@ -85,7 +80,7 @@ func (re *JsonConfig) GetBool(key string) bool {
 			"no", "NO", "No":
 			return false
 		default:
-			panic(errNoBoolCoerce + ": " + val)
+			panic(errBoolCoerce + ": " + val)
 	}
 }
 
