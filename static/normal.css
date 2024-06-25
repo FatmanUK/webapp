@@ -1,32 +1,53 @@
 *, html, body {
-	font-family: sans-serif;
+	font-family: "Segoe UI", "Arial", sans-serif;
 }
 
 body {
-	background-color: #fbe7d3;
+	background-color: #d8c3a8; /*#fbe7d3;*/
+	margin: 0;
 }
 
 header, footer, article {
-	margin: 5px;
+	margin: 25px;
 }
 
 header, footer {
-	border: 1px black solid;
+/*	border: 1px black solid;
 	padding: 10px;
-	border-radius: 15px;
+	border-radius: 15px;*/
 	background-color: white;
+}
+
+footer {
+	background-color: transparent;
+	text-align: center;
+	font-size: x-small;
+	margin-top: 0px;
 }
 
 article {
 	background-color: white;
-	padding: 10px;
-	border: 1px black solid;
-	margin-top: 30px;
+	padding: 25px;
+/*	border: 1px black solid;*/
+	margin: 0;
 }
 
-header#username, header#home, footer#gh, article > h1:first-child {
+header#username, header#home, header#logo, header#gh {
+	font-weight: bold;
+	float: left;
+	background-color: transparent;
+/*	margin-top: 0;*/
+}
+
+article > h1:first-child {
 	float: left;
 	margin-top: 0;
+}
+
+header > a > img {
+	width: 200px;
+	height: 30px;
+	display: block;
 }
 
 h1 {
@@ -60,7 +81,7 @@ h6 {
 }
 
 hr {
-	width: 50%;
+	width: 0;
 	clear: both;
 }
 
@@ -108,6 +129,10 @@ sub, sup {
 	font-size: x-small;
 }
 
+figure {
+	margin-left: 20px;
+}
+
 figure.quote {
 	padding-left: 30px;
 	background-image: url("/static/quote_gradient.png");
@@ -120,8 +145,10 @@ blockquote {
 }
 
 figcaption {
-	margin-left: 0;
+	margin: 0;
+	font-style: italic;
+/*	margin-left: 0;
 	margin-right: 20px;
 	margin-top: 20px;
-	margin-bottom: 20px;
+	margin-bottom: 20px;*/
 }
