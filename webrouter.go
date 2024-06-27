@@ -54,7 +54,6 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 func (re *WebRouter) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	url := "/view/" + re.Config.GetString("web.home")
 	http.Redirect(w, r, url, http.StatusFound)
-
 }
 
 func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -64,6 +63,9 @@ func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title s
 		session = cookie.Value
 	}
 	user := UserFromSessionToken(session)
+	t := time.Now()
+	user.LastRequest = &t
+	user.Save()
 	p := &Page{}
 	err := p.LoadPage(title)
 	if err != nil {

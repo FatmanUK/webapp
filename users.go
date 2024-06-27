@@ -1,9 +1,10 @@
 package main
 
 import (
+	"strings"
+	"time"
 	"gorm.io/gorm"
 	"github.com/glebarez/sqlite" // pure Go?
-	"strings"
 	"github.com/kjk/betterguid"
 )
 
@@ -11,6 +12,9 @@ type User struct {
 	Name string
 	Nick string
 	Groups string
+	Created *time.Time
+	LastLogin *time.Time
+	LastRequest *time.Time
 	Nonce string `gorm:"-"`
 	Session string `gorm:"-"`
 }
@@ -38,7 +42,9 @@ func UserFromSessionToken(session string) *User {
 
 func (re *User) Authorise(name string) {
 	err := re.Load(name)
-	// anything else?
+	t := time.Now()
+	re.LastLogin = &t
+	re.Save()
 	if err != nil {
 		panic(errLoadUser)
 	}
@@ -48,13 +54,19 @@ func (re User) Debug() string {
 	output := `
 ## Sessions`
 	for k, _ := range sessions {
+		created := sessions[k].Created
+		last_login := sessions[k].LastLogin
+		last_request := sessions[k].LastRequest
 		output += `
-    Session:      ` + k + `  
-    User.Name:    ` + sessions[k].Name + `  
-    User.Nick:    ` + sessions[k].Nick + `  
-    User.Groups:  ` + sessions[k].Groups + `  
-    User.Session: ` + sessions[k].Session + `  
-    User.Nonce:   ` + sessions[k].Nonce
+    Session:          ` + k + `  
+    User.Name:        ` + sessions[k].Name + `  
+    User.Nick:        ` + sessions[k].Nick + `  
+    User.Groups:      ` + sessions[k].Groups + `  
+    User.Created:     ` + stringFromZuluTime(created) + `  
+    User.LastLogin:   ` + stringFromZuluTime(last_login) + `  
+    User.LastRequest: ` + stringFromZuluTime(last_request) + `  
+    User.Session:     ` + sessions[k].Session + `  
+    User.Nonce:       ` + sessions[k].Nonce
 	}
 	output += `
 ___`
@@ -64,6 +76,12 @@ ___`
 func (re *User) Load(name string) error {
 	result := userDb.Where("name = ?", name).First(re)
 	return result.Error
+}
+
+func (re *User) Save() {
+	if re.Name != "" {
+		userDb.Create(re)
+	}
 }
 
 func (re *User) IsGroupMember(group string) bool {

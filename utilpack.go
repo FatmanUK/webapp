@@ -4,7 +4,16 @@ import (
 	"os"
 	"errors"
 	"encoding/base64"
+	"time"
 )
+
+func stringFromZuluTime(t *time.Time) string {
+	u := []byte("- nil -")
+	if t != nil {
+		u, _ = t.UTC().MarshalText()
+	}
+	return string(u)
+}
 
 func b64decode(b string) string {
 	d, e := base64.StdEncoding.DecodeString(b)
