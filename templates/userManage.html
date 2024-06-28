@@ -1,0 +1,46 @@
+<h1>User Management</h1>
+<hr/>
+<div class="umFloater">
+	<form action="/user/create" method="POST">
+		<p><label name="User">User: </label><input name="User" id="User" /></p>
+		<p><label name="Nick">Nick: </label><input name="Nick" id="Nick" /></p>
+		<div class="frame">
+			<p style="float: left;"><label name="authors">authors: </label><input type="checkbox" name="AddGroup" value="authors" /></p>
+			<p style="float: left;"><label name="wizards">wizards: </label><input type="checkbox" name="AddGroup" value="wizards" /></p>
+			<p style="float: left;"><label name="stewards">stewards: </label><input type="checkbox" name="AddGroup" value="stewards" /></p>
+			<p style="float: left;"><label name="meatbags">meatbags: </label><input type="checkbox" name="AddGroup" value="meatbags" /></p>
+		</div>
+		<p style="clear: both;"><label name="Datum">Public Key: </label><textarea cols="32" rows="9" name="Datum"></textarea></p>
+		<p><input type="Submit" value="Create" /></p>
+	</form>
+</div>
+<div class="umFloater">
+	<form action="/user/modify" method="POST">
+		<p><label name="User">User: </label><input name="User" id="User" /></p>
+		<p><label name="Nick">Nick: </label><input name="Nick" id="Nick" /></p>
+		<div class="frame">
+			<p style="float: left;"><label name="authors">authors: </label><input type="checkbox" name="AddGroup" value="authors" /></p>
+			<p style="float: left;"><label name="wizards">wizards: </label><input type="checkbox" name="AddGroup" value="wizards" /></p>
+			<p style="float: left;"><label name="stewards">stewards: </label><input type="checkbox" name="AddGroup" value="stewards" /></p>
+			<p style="float: left;"><label name="meatbags">meatbags: </label><input type="checkbox" name="AddGroup" value="meatbags" /></p>
+		</div>
+		<p style="clear: both;"><label name="Datum">Public Key: </label><textarea cols="32" rows="9" name="Datum"></textarea></p>
+		<p><input type="Submit" value="Modify" /></p>
+	</form>
+</div>
+<div class="umFloater">
+	<form action="/user/delete" method="POST">
+		<p><label name="User">User: </label><input name="User" id="User" /></p>
+		<p><input type="Submit" value="Delete" /></p>
+	</form>
+</div>
+
+<!--form action="/user/login2" method="POST" onLoad="update();"-->
+<!--
+	<p><label name="User">User: </label><input name="User" id="User" onInput="update();" onChange="update();" onUnfocus="update();" onFocus="update();" /></p>
+	<p>Nonce: {{printf "%s" .User.Nonce}}</p>
+	<p><tt class="command">$ &lt;&lt;&lt;"{{printf "%s" .User.Nonce}}" gpg --clear-sign -u <span id="user"></span></tt></p>
+	<p><label name="Datum">Message and Signature: </label><textarea cols="70" rows="22" name="Datum"></textarea></p>
+	<p><input type="Submit" value="Login" /></p>-->
+<!--script language="Javascript" type="text/javascript" src="/static/webapp.js"></script-->
+<hr/>

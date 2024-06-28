@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"io/fs"
 	"errors"
 	"encoding/base64"
 	"time"
@@ -26,6 +27,13 @@ func b64decode(b string) string {
 func fileExists(name string) bool {
 	_, err := os.Stat(name)
 	return ! errors.Is(err, os.ErrNotExist)
+}
+
+func saveTextFile(file string, content string, mode fs.FileMode) {
+	err := os.WriteFile(file, []byte(content), mode)
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func loadTextFile(file string) string {

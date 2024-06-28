@@ -63,7 +63,7 @@ func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title s
 		session = cookie.Value
 	}
 	user := UserFromSessionToken(session)
-	t := time.Now()
+	t := time.Now().UTC()
 	user.LastRequest = &t
 	user.Save()
 	p := &Page{}
@@ -135,7 +135,7 @@ func (re *WebRouter) debugHandler(w http.ResponseWriter, r *http.Request, title 
 		session = cookie.Value
 	}
 	user := UserFromSessionToken(session)
-	log.Output(1, "Debug tool accessed.")
+	log.Output(1, "Debug tool accessed")
 	template := "debug"
 	p := Page{Title: "Debug"}
 	// TODO: improve this?
@@ -154,6 +154,7 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 	if cookie != nil {
 		session = cookie.Value
 	}
+	keydir := re.Config.GetString("auth.keys_dir")
 	user := UserFromSessionToken(session)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
@@ -169,7 +170,6 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		p.Title = "Access Denied"
 		r.ParseForm()
 		name := r.PostForm["User"][0]
-		keydir := re.Config.GetString("auth.keys_dir")
 		keyfile := keydir + "/" + name + ".asc"
 		pubkey := loadTextFile(keyfile)
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
@@ -187,6 +187,33 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		user.Logout()
 		SetCookie(w, -1, "")
 		log.Output(1, "Logout by user")
+	}
+	if a == "manage" {
+		if ! user.IsGroupMember("stewards") {
+			denyUnauthorised(w, r)
+			return
+		}
+		template = "userManage"
+		p.Title = "Manage Users"
+		log.Output(1, "User management attempt")
+	}
+	if a == "create" {
+		if ! user.IsGroupMember("stewards") {
+			denyUnauthorised(w, r)
+			return
+		}
+		template = "userCreate"
+		p.Title = "User Created"
+		r.ParseForm()
+		name := r.PostForm["User"][0]
+		keyfile := keydir + "/" + name + ".asc"
+		saveTextFile(keyfile, r.PostForm["Datum"][0], 0600)
+		(&User{
+			Name: name,
+			Nick: r.PostForm["Nick"][0],
+		}).Create(r.PostForm["AddGroup"])
+		p.Body = []byte(name)
+		log.Output(1, "User created")
 	}
 	v := &View{Config: re.Config, Page: &p, User: *user}
 	renderTemplate(w, template, v)
