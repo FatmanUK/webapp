@@ -1,4 +1,5 @@
 # {{.Page.Title}}
 {{if .User.IsGroupMember "authors"}}[edit](/edit/{{$.Page.Title}}){{end}}
+{{if .User.IsGroupMember "stewards"}}[manage](/user/manage){{end}}
 ___
 {{printf "%s" .Page.Body}}
