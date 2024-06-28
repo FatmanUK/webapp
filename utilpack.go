@@ -43,3 +43,10 @@ func loadTextFile(file string) string {
 	}
 	return string(b)
 }
+
+func deleteFile(file string) {
+	err := os.Remove(file)
+	if err != nil {
+		panic(err.Error())
+	}
+}

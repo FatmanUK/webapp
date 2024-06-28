@@ -130,3 +130,10 @@ func (re *User) Create(groups []string) {
 	re.Groups = strings.Join(groups, ";")
 	userDb.Create(re)
 }
+
+func (re *User) Delete() {
+	if re.Name != "" {
+		model := userDb.Model(re)
+		model.Where("name = ?", re.Name).Delete(*re)
+	}
+}

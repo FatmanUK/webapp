@@ -158,6 +158,9 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 	user := UserFromSessionToken(session)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
+	if r.Method == "POST" {
+		r.ParseForm()
+	}
 	if a == "login" {
 		template = "userLogin"
 		user.Login()
@@ -168,7 +171,6 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 	if a == "login2" {
 		template = "userLoginFailed"
 		p.Title = "Access Denied"
-		r.ParseForm()
 		name := r.PostForm["User"][0]
 		keyfile := keydir + "/" + name + ".asc"
 		pubkey := loadTextFile(keyfile)
@@ -204,7 +206,6 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		}
 		template = "userCreate"
 		p.Title = "User Created"
-		r.ParseForm()
 		name := r.PostForm["User"][0]
 		keyfile := keydir + "/" + name + ".asc"
 		saveTextFile(keyfile, r.PostForm["Datum"][0], 0600)
@@ -214,6 +215,21 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		}).Create(r.PostForm["AddGroup"])
 		p.Body = []byte(name)
 		log.Output(1, "User created")
+	}
+	if a == "delete" {
+		if ! user.IsGroupMember("stewards") {
+			denyUnauthorised(w, r)
+			return
+		}
+		template = "userDelete"
+		p.Title = "User Deleted"
+		name := r.PostForm["User"][0]
+		deleteFile(keydir + "/" + name + ".asc")
+		(&User{
+			Name: name,
+		}).Delete()
+		p.Body = []byte(name)
+		log.Output(1, "User delete")
 	}
 	v := &View{Config: re.Config, Page: &p, User: *user}
 	renderTemplate(w, template, v)
