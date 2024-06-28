@@ -3,7 +3,7 @@
 }
 
 body {
-	background-color: #d8c3a8; /*#fbe7d3;*/
+	background-color: #d8c3a8;
 	margin: 0;
 }
 
@@ -12,9 +12,6 @@ header, footer, article {
 }
 
 header, footer {
-/*	border: 1px black solid;
-	padding: 10px;
-	border-radius: 15px;*/
 	background-color: white;
 }
 
@@ -28,7 +25,6 @@ footer {
 article {
 	background-color: white;
 	padding: 25px;
-/*	border: 1px black solid;*/
 	margin: 0;
 }
 
@@ -36,7 +32,6 @@ header#username, header#home, header#logo, header#gh {
 	font-weight: bold;
 	float: left;
 	background-color: transparent;
-/*	margin-top: 0;*/
 }
 
 article > h1:first-child {
@@ -86,7 +81,7 @@ hr {
 }
 
 tt.code > p, tt.command, span#user {
-	font-family: "Monaspace Krypton Var", monospace
+	font-family: "Monaspace Krypton Var", monospace;
 }
 
 tt.code {
@@ -147,8 +142,14 @@ blockquote {
 figcaption {
 	margin: 0;
 	font-style: italic;
-/*	margin-left: 0;
-	margin-right: 20px;
-	margin-top: 20px;
-	margin-bottom: 20px;*/
+}
+
+div.umFloater {
+	float: left;
+	width: 300px;
+}
+
+div.frame {
+	float: left;
+	border: 1px outset black;
 }

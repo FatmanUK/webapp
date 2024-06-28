@@ -1,0 +1,23 @@
+<h1>User Management</h1>
+<hr/>
+<div class="umFloater">
+	<form action="/user/create" method="POST">
+		<p><label name="User">User: </label><input name="User" id="User" /></p>
+		<p><label name="Nick">Nick: </label><input name="Nick" id="Nick" /></p>
+		<div class="frame">
+			<p style="float: left;"><label name="authors">authors: </label><input type="checkbox" name="AddGroup" value="authors" /></p>
+			<p style="float: left;"><label name="wizards">wizards: </label><input type="checkbox" name="AddGroup" value="wizards" /></p>
+			<p style="float: left;"><label name="stewards">stewards: </label><input type="checkbox" name="AddGroup" value="stewards" /></p>
+			<p style="float: left;"><label name="meatbags">meatbags: </label><input type="checkbox" name="AddGroup" value="meatbags" /></p>
+		</div>
+		<p style="clear: both;"><label name="Datum">Public Key: </label><textarea cols="32" rows="9" name="Datum"></textarea></p>
+		<p><input type="Submit" value="Create" /></p>
+	</form>
+</div>
+<div class="umFloater">
+	<form action="/user/delete" method="POST">
+		<p><label name="User">User: </label><input name="User" id="User" /></p>
+		<p><input type="Submit" value="Delete" /></p>
+	</form>
+</div>
+<hr/>

@@ -2,9 +2,19 @@ package main
 
 import (
 	"os"
+	"io/fs"
 	"errors"
 	"encoding/base64"
+	"time"
 )
+
+func stringFromZuluTime(t *time.Time) string {
+	u := []byte("- nil -")
+	if t != nil {
+		u, _ = t.UTC().MarshalText()
+	}
+	return string(u)
+}
 
 func b64decode(b string) string {
 	d, e := base64.StdEncoding.DecodeString(b)
@@ -19,10 +29,24 @@ func fileExists(name string) bool {
 	return ! errors.Is(err, os.ErrNotExist)
 }
 
+func saveTextFile(file string, content string, mode fs.FileMode) {
+	err := os.WriteFile(file, []byte(content), mode)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
 func loadTextFile(file string) string {
 	b, err := os.ReadFile(file)
 	if err != nil {
 		panic(err.Error())
 	}
 	return string(b)
+}
+
+func deleteFile(file string) {
+	err := os.Remove(file)
+	if err != nil {
+		panic(err.Error())
+	}
 }

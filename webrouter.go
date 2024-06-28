@@ -54,7 +54,6 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 func (re *WebRouter) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	url := "/view/" + re.Config.GetString("web.home")
 	http.Redirect(w, r, url, http.StatusFound)
-
 }
 
 func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -64,6 +63,9 @@ func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title s
 		session = cookie.Value
 	}
 	user := UserFromSessionToken(session)
+	t := time.Now().UTC()
+	user.LastRequest = &t
+	user.Save()
 	p := &Page{}
 	err := p.LoadPage(title)
 	if err != nil {
@@ -133,7 +135,7 @@ func (re *WebRouter) debugHandler(w http.ResponseWriter, r *http.Request, title 
 		session = cookie.Value
 	}
 	user := UserFromSessionToken(session)
-	log.Output(1, "Debug tool accessed.")
+	log.Output(1, "Debug tool accessed")
 	template := "debug"
 	p := Page{Title: "Debug"}
 	// TODO: improve this?
@@ -152,9 +154,13 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 	if cookie != nil {
 		session = cookie.Value
 	}
+	keydir := re.Config.GetString("auth.keys_dir")
 	user := UserFromSessionToken(session)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
+	if r.Method == "POST" {
+		r.ParseForm()
+	}
 	if a == "login" {
 		template = "userLogin"
 		user.Login()
@@ -165,9 +171,7 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 	if a == "login2" {
 		template = "userLoginFailed"
 		p.Title = "Access Denied"
-		r.ParseForm()
 		name := r.PostForm["User"][0]
-		keydir := re.Config.GetString("auth.keys_dir")
 		keyfile := keydir + "/" + name + ".asc"
 		pubkey := loadTextFile(keyfile)
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
@@ -185,6 +189,47 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		user.Logout()
 		SetCookie(w, -1, "")
 		log.Output(1, "Logout by user")
+	}
+	if a == "manage" {
+		if ! user.IsGroupMember("stewards") {
+			denyUnauthorised(w, r)
+			return
+		}
+		template = "userManage"
+		p.Title = "Manage Users"
+		log.Output(1, "User management attempt")
+	}
+	if a == "create" {
+		if ! user.IsGroupMember("stewards") {
+			denyUnauthorised(w, r)
+			return
+		}
+		template = "userCreate"
+		p.Title = "User Created"
+		name := r.PostForm["User"][0]
+		keyfile := keydir + "/" + name + ".asc"
+		saveTextFile(keyfile, r.PostForm["Datum"][0], 0600)
+		(&User{
+			Name: name,
+			Nick: r.PostForm["Nick"][0],
+		}).Create(r.PostForm["AddGroup"])
+		p.Body = []byte(name)
+		log.Output(1, "User created")
+	}
+	if a == "delete" {
+		if ! user.IsGroupMember("stewards") {
+			denyUnauthorised(w, r)
+			return
+		}
+		template = "userDelete"
+		p.Title = "User Deleted"
+		name := r.PostForm["User"][0]
+		deleteFile(keydir + "/" + name + ".asc")
+		(&User{
+			Name: name,
+		}).Delete()
+		p.Body = []byte(name)
+		log.Output(1, "User delete")
 	}
 	v := &View{Config: re.Config, Page: &p, User: *user}
 	renderTemplate(w, template, v)

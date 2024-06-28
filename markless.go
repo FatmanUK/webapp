@@ -22,6 +22,9 @@ var threeAsteriskRe = regexp.MustCompile(`\*\*\*(.*?)\*\*\*`)
 var twoAsteriskRe = regexp.MustCompile(`\*\*(.*?)\*\*`)
 var oneAsteriskRe = regexp.MustCompile(`\*(.*?)\*`)
 var brRe = regexp.MustCompile(`  $`)
+var br2Re = regexp.MustCompile(` \$`)
+var br3Re = regexp.MustCompile(`^$`)
+var strikeRe = regexp.MustCompile(`~~(.*?)~~`)
 var citeRe = regexp.MustCompile(`^>\[(.*?)\] (.*)$`)
 var quoteRe = regexp.MustCompile(`^> (.*)$`)
 var codeRe = regexp.MustCompile(`^(	|    )(.*)$`)
@@ -74,6 +77,11 @@ func markupAsterisks(line *[]byte) {
 	*line = oneAsteriskRe.ReplaceAll(*line, []byte(r_em))
 }
 
+func markupStrike(line *[]byte) {
+	r_strike := "<s>$1</s>"
+	*line = strikeRe.ReplaceAll(*line, []byte(r_strike))
+}
+
 func markupCite(line *[]byte) {
 	citeText := `<figure class="quote">
   <blockquote>
@@ -97,6 +105,8 @@ func markupQuote(line *[]byte) {
 
 func markupBr(line *[]byte) {
 	*line = brRe.ReplaceAll(*line, []byte("<br/>"))
+	*line = br2Re.ReplaceAll(*line, []byte("<br/>"))
+	*line = br3Re.ReplaceAll(*line, []byte("<br/>"))
 }
 
 func markupCode(line *[]byte) {
@@ -164,6 +174,7 @@ func markup(line *[]byte, addFootnotes *bytes.Buffer) {
 	markupDashes(line)
 	markupAsterisks(line)
 	markupBr(line)
+	markupStrike(line)
 	markupCite(line)
 	markupQuote(line)
 	markupCode(line)
