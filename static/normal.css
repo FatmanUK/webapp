@@ -109,7 +109,7 @@ tt.code:before {
 	counter-reset: my-counter;
 }
 
-h1 + a {
+h1 + a, h1 + a + a {
 	float: left;
 	margin-top: 2px;
 	margin-left: 10px;

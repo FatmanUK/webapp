@@ -14,6 +14,8 @@ import (
 var validPath = regexp.MustCompile(pathRe)
 var pathRe = "^/(edit|save|view|user|debug)/([a-zA-Z0-9]+)$"
 
+type handlerfn func(http.ResponseWriter, *http.Request, string)
+
 type WebRouter struct {
 	Config *JsonConfig
 }
@@ -25,7 +27,8 @@ func (re *WebRouter) Run() error {
 	http.HandleFunc("/save/", makeHandler(re.saveHandler))
 	http.HandleFunc("/user/", makeHandler(re.userHandler))
 	if BUILD_MODE == "Debug" {
-		http.HandleFunc("/debug/", makeHandler(re.debugHandler))
+		fn := makeHandler(re.debugHandler)
+		http.HandleFunc("/debug/", fn)
 	}
 	dir := re.Config.GetString("web.static_dir")
 	fs := http.FileServer(http.Dir(dir))
@@ -39,7 +42,7 @@ func (re *WebRouter) Run() error {
 	return http.ListenAndServeTLS(":" + port, cert, key, nil)
 }
 
-func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+func makeHandler(fn handlerfn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
@@ -50,12 +53,17 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
-func (re *WebRouter) defaultHandler(w http.ResponseWriter, r *http.Request) {
+func (re *WebRouter) defaultHandler(
+		w http.ResponseWriter,
+		r *http.Request) {
 	url := "/view/" + re.Config.GetString("web.home")
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) viewHandler(
+		w http.ResponseWriter,
+		r *http.Request,
+		title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -72,14 +80,18 @@ func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title s
 			denyNotFound(w, r)
 			return
 		}
-		http.Redirect(w, r, "/edit/" + title, http.StatusFound)
+		url := "/edit/" + title
+		http.Redirect(w, r, url, http.StatusFound)
 		return
 	}
 	v := &View{Config: re.Config, Page: p, User: *user}
 	renderTemplate(w, "view", v)
 }
 
-func (re *WebRouter) editHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) editHandler(
+		w http.ResponseWriter,
+		r *http.Request,
+		title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -104,7 +116,10 @@ func (re *WebRouter) editHandler(w http.ResponseWriter, r *http.Request, title s
 	renderTemplate(w, "edit", v)
 }
 
-func (re *WebRouter) saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) saveHandler(
+		w http.ResponseWriter,
+		r *http.Request,
+		title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -126,7 +141,10 @@ func (re *WebRouter) saveHandler(w http.ResponseWriter, r *http.Request, title s
 	http.Redirect(w, r, "/view/" + title, http.StatusFound)
 }
 
-func (re *WebRouter) debugHandler(w http.ResponseWriter, r *http.Request, title string) {
+func (re *WebRouter) debugHandler(
+		w http.ResponseWriter,
+		r *http.Request,
+		title string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
@@ -146,89 +164,136 @@ func (re *WebRouter) debugHandler(w http.ResponseWriter, r *http.Request, title 
 	renderTemplate(w, template, v)
 }
 
-func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a string) {
+func (re *WebRouter) actionLogin(
+		w http.ResponseWriter,
+		user *User,
+		page *Page) string {
+	user.Login()
+	re.SetCookie(w, 1, user.Session)
+	log.Output(1, "Login attempt.")
+	page.Title = "Login"
+	return "userLogin"
+}
+
+func (re *WebRouter) actionLogin2(
+		r *http.Request,
+		user *User,
+		page *Page) string {
+	page.Title = "Access Denied"
+	name := r.PostForm["User"][0]
+	keydir := re.Config.GetString("auth.keys_dir")
+	keyfile := keydir + "/" + name + ".asc"
+	pubkey := &GpgPublicKey{}
+	pubkey.LoadFileS(keyfile)
+	template := "userLoginFailed"
+	if pubkey.bIsGoodClearSignatureMssU(r.PostForm, user) {
+		template = "userWelcome"
+		page.Title = "Hello"
+		user.Authorise(name, re.Config)
+		log.Output(1, "Login successful.")
+	} else {
+		log.Output(1, "Login failed.")
+	}
+	return template
+}
+
+func (re *WebRouter) actionLogout(
+		w http.ResponseWriter,
+		user *User,
+		page *Page) string {
+	user.Logout()
+	re.SetCookie(w, -1, "")
+	log.Output(1, "Logout by user")
+	page.Title = "Logout"
+	return "userLogout"
+}
+
+func (re *WebRouter) actionManage(page *Page) string {
+	log.Output(1, "User management attempt")
+	page.Title = "Manage Users"
+	return "userManage"
+}
+
+func (re *WebRouter) actionCreate(
+		r *http.Request,
+		page *Page) string {
+	name := r.PostForm["User"][0]
+	keydir := re.Config.GetString("auth.keys_dir")
+	keyfile := keydir + "/" + name + ".asc"
+	pubkey := &GpgPublicKey{}
+	pubkey.LoadBlobS(r.PostForm["Datum"][0])
+	pubkey.SaveSI(keyfile, 0600)
+	(&User{
+		Name: name,
+		Nick: r.PostForm["Nick"][0],
+	}).Create(r.PostForm["AddGroup"])
+	log.Output(1, "User created")
+	page.Title = "User Created"
+	page.Body = []byte(name)
+	return "userCreate"
+}
+
+func (re *WebRouter) actionDelete(
+		r *http.Request,
+		page *Page) string {
+	name := r.PostForm["User"][0]
+	keydir := re.Config.GetString("auth.keys_dir")
+	deleteFile(keydir + "/" + name + ".asc")
+	(&User{
+		Name: name,
+	}).Delete()
+	page.Title = "User Deleted"
+	page.Body = []byte(name)
+	log.Output(1, "User delete")
+	return "userDelete"
+}
+
+func (re *WebRouter) userHandler(
+		w http.ResponseWriter,
+		r *http.Request,
+		a string) {
 	var session string = ""
 	cookie, _ := ReadSessionToken(r)
 	if cookie != nil {
 		session = cookie.Value
 	}
-	keydir := re.Config.GetString("auth.keys_dir")
 	user := UserFromSessionToken(session, re.Config)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
 	if r.Method == "POST" {
 		r.ParseForm()
 	}
-	// TODO: replace multi-if with switch and subfunctions
-	if a == "login" {
-		template = "userLogin"
-		user.Login()
-		re.SetCookie(w, 1, user.Session)
-		p.Title = "Login"
-		log.Output(1, "Login attempt.")
-	}
-	if a == "login2" {
-		template = "userLoginFailed"
-		p.Title = "Access Denied"
-		name := r.PostForm["User"][0]
-		keyfile := keydir + "/" + name + ".asc"
-		pubkey := loadTextFile(keyfile)
-		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
-			template = "userWelcome"
-			p.Title = "Hello"
-			user.Authorise(name, re.Config)
-			log.Output(1, "Login successful.")
-		} else {
-			log.Output(1, "Login failed.")
+	switch a {
+		case "login": {
+			template = re.actionLogin(w, user, &p)
 		}
-	}
-	if a == "logout" {
-		template = "userLogout"
-		p.Title = "Logout"
-		user.Logout()
-		re.SetCookie(w, -1, "")
-		log.Output(1, "Logout by user")
-	}
-	if a == "manage" {
-		if ! user.IsGroupMember("stewards") {
-			denyUnauthorised(w, r)
-			return
+		case "login2": {
+			template = re.actionLogin2(r, user, &p)
 		}
-		template = "userManage"
-		p.Title = "Manage Users"
-		log.Output(1, "User management attempt")
-	}
-	if a == "create" {
-		if ! user.IsGroupMember("stewards") {
-			denyUnauthorised(w, r)
-			return
+		case "logout": {
+			template = re.actionLogout(w, user, &p)
 		}
-		template = "userCreate"
-		p.Title = "User Created"
-		name := r.PostForm["User"][0]
-		keyfile := keydir + "/" + name + ".asc"
-		saveTextFile(keyfile, r.PostForm["Datum"][0], 0600)
-		(&User{
-			Name: name,
-			Nick: r.PostForm["Nick"][0],
-		}).Create(r.PostForm["AddGroup"])
-		p.Body = []byte(name)
-		log.Output(1, "User created")
-	}
-	if a == "delete" {
-		if ! user.IsGroupMember("stewards") {
-			denyUnauthorised(w, r)
-			return
+		case "manage": {
+			if ! user.IsGroupMember("stewards") {
+				denyUnauthorised(w, r)
+				return
+			}
+			template = re.actionManage(&p)
 		}
-		template = "userDelete"
-		p.Title = "User Deleted"
-		name := r.PostForm["User"][0]
-		deleteFile(keydir + "/" + name + ".asc")
-		(&User{
-			Name: name,
-		}).Delete()
-		p.Body = []byte(name)
-		log.Output(1, "User delete")
+		case "create": {
+			if ! user.IsGroupMember("stewards") {
+				denyUnauthorised(w, r)
+				return
+			}
+			template = re.actionCreate(r, &p)
+		}
+		case "delete": {
+			if ! user.IsGroupMember("stewards") {
+				denyUnauthorised(w, r)
+				return
+			}
+			template = re.actionDelete(r, &p)
+		}
 	}
 	v := &View{Config: re.Config, Page: &p, User: *user}
 	renderTemplate(w, template, v)
@@ -251,7 +316,10 @@ ___`
 	return output
 }
 
-func (re *WebRouter) SetCookie(w http.ResponseWriter, i int, session string) {
+func (re *WebRouter) SetCookie(
+		w http.ResponseWriter,
+		i int,
+		session string) {
 	timeout_h := re.Config.GetInt("web.timeouts.expiry_h")
 	offset_s := time.Duration(i * timeout_h) * time.Hour
 	cookie := &http.Cookie{
