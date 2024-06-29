@@ -21,6 +21,7 @@ type User struct {
 }
 
 var sessions map[string]*User = map[string]*User{}
+var timers map[string]*time.Timer = map[string]*time.Timer{}
 
 var userDb *gorm.DB
 
@@ -44,16 +45,25 @@ func (*User) OpenDatabase(dbfile string) {
 	userDb.AutoMigrate(&User{})
 }
 
-func UserFromSessionToken(session string) *User {
+func UserFromSessionToken(session string, c *JsonConfig) *User {
 	u, exists := sessions[session]
 	if ! exists {
 		return &User{}
 	}
+	u.ResetIdleTimeout(c)
 	return u
 }
 
-func (re *User) Authorise(name string) {
-	err := re.Load(name)
+func (re *User) Authorise(name string, c *JsonConfig) {
+	dur_h := time.Duration(c.GetInt("web.timeouts.idle_h"))
+	timers[re.Session] = re.CreateLogoutTimer(time.Hour * dur_h)
+
+	dur_h = time.Duration(c.GetInt("web.timeouts.expiry_h"))
+	re.CreateLogoutTimer(time.Hour * dur_h)
+
+	result := userDb.Where("name = ?", name).First(re)
+	err := result.Error
+
 	t := time.Now().UTC()
 	re.LastLogin = &t
 	re.Save()
@@ -63,6 +73,7 @@ func (re *User) Authorise(name string) {
 }
 
 func (re User) Debug() string {
+	// time.Timer can't report time left. Missing feature.
 	output := `
 ## Sessions`
 	for k, _ := range sessions {
@@ -82,14 +93,20 @@ func (re User) Debug() string {
 			sessions[k].Nonce,
 		)
 	}
-	output += `
-___`
+	output += `___`
 	return output
 }
 
-func (re *User) Load(name string) error {
-	result := userDb.Where("name = ?", name).First(re)
-	return result.Error
+func (re *User) CreateLogoutTimer(t time.Duration) *time.Timer {
+	return time.AfterFunc(t, re.Logout)
+}
+
+func (re *User) ResetIdleTimeout(c* JsonConfig) {
+	dur_h := time.Duration(c.GetInt("web.timeouts.idle_h"))
+	t, exists := timers[re.Session]
+	if exists {
+		t.Reset(time.Hour * dur_h)
+	}
 }
 
 func (re *User) Save() {

@@ -7,6 +7,8 @@ var BUILD_MODE string
 var APPNAME string
 var HOME string
 var PORT string
+var COOKIE_EXPIRY_HOURS string
+var COOKIE_IDLE_TIMEOUT_HOURS string
 var CONFDIR string
 var DATADIR string
 

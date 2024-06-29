@@ -12,6 +12,7 @@ type View struct {
 }
 
 func setDefaults(c *JsonConfig) {
+	// TODO: automate this?
 	c.SetString("web.appname", APPNAME)
 	c.SetString("web.port", PORT)
 	c.SetString("web.home", HOME)
@@ -22,6 +23,8 @@ func setDefaults(c *JsonConfig) {
 	c.SetString("auth.keys_dir", DATADIR + "/keys")
 	c.SetString("web.static_dir", DATADIR + "/static")
 	c.SetString("web.template_dir", DATADIR + "/templates")
+	c.SetString("web.timeouts.expiry_h", COOKIE_EXPIRY_HOURS)
+	c.SetString("web.timeouts.idle_h", COOKIE_IDLE_TIMEOUT_HOURS)
 	if ! fileExists(CONFIG_FILE) {
 		mode := os.O_CREATE | os.O_WRONLY
 		f, err := os.OpenFile(CONFIG_FILE, mode, os.ModePerm)
