@@ -25,15 +25,16 @@ var timers map[string]*time.Timer = map[string]*time.Timer{}
 var userDb *gorm.DB
 
 var debugFormat string = `
-    Session:           %s  
-    User.Name:         %s  
-    User.Nick:         %s  
-    User.Groups:       %s  
-    User.Created:      %s  
-    User.LastLogin:    %s  
-    User.LastRequest:  %s  
-    User.Session:      %s  
-    User.Nonce:        %s  `
+    Session:           %s \
+    User.Name:         %s \
+    User.Nick:         %s \
+    User.Groups:       %s \
+    User.Created:      %s \
+    User.LastLogin:    %s \
+    User.LastRequest:  %s \
+    User.Session:      %s \
+    User.Nonce:        %s \
+`
 
 func (*User) OpenDatabase(dbfile string) {
 	d, err := gorm.Open(sqlite.Open(dbfile), &gorm.Config{})
@@ -74,22 +75,23 @@ func (re *User) Authorise(name string, c *JsonConfig) {
 func (re User) Debug() string {
 	// time.Timer can't report time left. Missing feature.
 	output := `
-## Sessions`
-	for k, _ := range sessions {
-		created := sessions[k].Created
-		last_login := sessions[k].LastLogin
-		last_request := sessions[k].LastRequest
+## Sessions
+`
+	for k, s := range sessions {
+		created := s.Created
+		last_login := s.LastLogin
+		last_request := s.LastRequest
 		output += fmt.Sprintf(
 			debugFormat,
 			k,
-			sessions[k].Name,
-			sessions[k].Nick,
-			sessions[k].Groups,
+			s.Name,
+			s.Nick,
+			s.Groups,
 			stringFromZuluTime(created),
 			stringFromZuluTime(last_login),
 			stringFromZuluTime(last_request),
-			sessions[k].Session,
-			sessions[k].Nonce,
+			s.Session,
+			s.Nonce,
 		)
 	}
 	output += `___`
