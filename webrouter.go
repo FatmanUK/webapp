@@ -183,9 +183,10 @@ func (re *WebRouter) actionLogin2(
 	name := r.PostForm["User"][0]
 	keydir := re.Config.GetString("auth.keys_dir")
 	keyfile := keydir + "/" + name + ".asc"
-	pubkey := loadTextFile(keyfile)
+	pubkey := &GpgPublicKey{}
+	pubkey.LoadFileS(keyfile)
 	template := "userLoginFailed"
-	if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
+	if pubkey.bIsGoodClearSignatureMssU(r.PostForm, user) {
 		template = "userWelcome"
 		page.Title = "Hello"
 		user.Authorise(name, re.Config)
@@ -219,7 +220,9 @@ func (re *WebRouter) actionCreate(
 	name := r.PostForm["User"][0]
 	keydir := re.Config.GetString("auth.keys_dir")
 	keyfile := keydir + "/" + name + ".asc"
-	saveTextFile(keyfile, r.PostForm["Datum"][0], 0600)
+	pubkey := &GpgPublicKey{}
+	pubkey.LoadBlobS(r.PostForm["Datum"][0])
+	pubkey.SaveSI(keyfile, 0600)
 	(&User{
 		Name: name,
 		Nick: r.PostForm["Nick"][0],

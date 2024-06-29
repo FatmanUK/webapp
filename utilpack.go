@@ -29,19 +29,19 @@ func fileExists(name string) bool {
 	return ! errors.Is(err, os.ErrNotExist)
 }
 
-func saveTextFile(file string, content string, mode fs.FileMode) {
-	err := os.WriteFile(file, []byte(content), mode)
+func saveTextFile(file string, content []byte, mode fs.FileMode) {
+	err := os.WriteFile(file, content, mode)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
-func loadTextFile(file string) string {
+func loadTextFile(file string) []byte {
 	b, err := os.ReadFile(file)
 	if err != nil {
 		panic(err.Error())
 	}
-	return string(b)
+	return b
 }
 
 func deleteFile(file string) {
