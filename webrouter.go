@@ -32,7 +32,6 @@ func (re *WebRouter) Run() error {
 	t := http.StripPrefix("/static/", fs)
 	http.Handle("/static/", t)
 	http.HandleFunc("/", re.defaultHandler)
-
 	// run server
 	port := re.Config.GetString("web.port")
 	key := re.Config.GetString("web.tls.key")
@@ -62,7 +61,7 @@ func (re *WebRouter) viewHandler(w http.ResponseWriter, r *http.Request, title s
 	if cookie != nil {
 		session = cookie.Value
 	}
-	user := UserFromSessionToken(session)
+	user := UserFromSessionToken(session, re.Config)
 	t := time.Now().UTC()
 	user.LastRequest = &t
 	user.Save()
@@ -86,7 +85,7 @@ func (re *WebRouter) editHandler(w http.ResponseWriter, r *http.Request, title s
 	if cookie != nil {
 		session = cookie.Value
 	}
-	user := UserFromSessionToken(session)
+	user := UserFromSessionToken(session, re.Config)
 	if user.Name == "" {
 		denyAuthReqd(w, r)
 		return
@@ -96,7 +95,6 @@ func (re *WebRouter) editHandler(w http.ResponseWriter, r *http.Request, title s
 		return
 	}
 	log.Output(1, "Editing " + title + ".")
-
 	p := &Page{}
 	err := p.LoadPage(title)
 	if err != nil {
@@ -112,7 +110,7 @@ func (re *WebRouter) saveHandler(w http.ResponseWriter, r *http.Request, title s
 	if cookie != nil {
 		session = cookie.Value
 	}
-	user := UserFromSessionToken(session)
+	user := UserFromSessionToken(session, re.Config)
 	if user.Name == "" {
 		denyAuthReqd(w, r)
 		return
@@ -134,7 +132,7 @@ func (re *WebRouter) debugHandler(w http.ResponseWriter, r *http.Request, title 
 	if cookie != nil {
 		session = cookie.Value
 	}
-	user := UserFromSessionToken(session)
+	user := UserFromSessionToken(session, re.Config)
 	log.Output(1, "Debug tool accessed")
 	template := "debug"
 	p := Page{Title: "Debug"}
@@ -155,16 +153,17 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		session = cookie.Value
 	}
 	keydir := re.Config.GetString("auth.keys_dir")
-	user := UserFromSessionToken(session)
+	user := UserFromSessionToken(session, re.Config)
 	template := "userDefault"
 	p := Page{Title: "User Default"}
 	if r.Method == "POST" {
 		r.ParseForm()
 	}
+	// TODO: replace multi-if with switch and subfunctions
 	if a == "login" {
 		template = "userLogin"
 		user.Login()
-		SetCookie(w, 1, user.Session)
+		re.SetCookie(w, 1, user.Session)
 		p.Title = "Login"
 		log.Output(1, "Login attempt.")
 	}
@@ -177,7 +176,7 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		if isVerifiedPgpClearSignature(r.PostForm, user, pubkey) {
 			template = "userWelcome"
 			p.Title = "Hello"
-			user.Authorise(name)
+			user.Authorise(name, re.Config)
 			log.Output(1, "Login successful.")
 		} else {
 			log.Output(1, "Login failed.")
@@ -187,7 +186,7 @@ func (re *WebRouter) userHandler(w http.ResponseWriter, r *http.Request, a strin
 		template = "userLogout"
 		p.Title = "Logout"
 		user.Logout()
-		SetCookie(w, -1, "")
+		re.SetCookie(w, -1, "")
 		log.Output(1, "Logout by user")
 	}
 	if a == "manage" {
@@ -252,16 +251,15 @@ ___`
 	return output
 }
 
-func SetCookie(w http.ResponseWriter, i int, session string) {
-	now := time.Now()
-	offset := 24 * time.Duration(i) * time.Hour
-	expiry := now.Add(offset)
+func (re *WebRouter) SetCookie(w http.ResponseWriter, i int, session string) {
+	timeout_h := re.Config.GetInt("web.timeouts.expiry_h")
+	offset_s := time.Duration(i * timeout_h) * time.Hour
 	cookie := &http.Cookie{
 		Name: "session_token",
 		Value: session,
-		MaxAge: i * 86400,
+		MaxAge: int(offset_s),
 		Path: "/",
-		Expires: expiry,
+		Expires: time.Now().Add(offset_s),
 		SameSite: http.SameSiteLaxMode,
 	}
 	http.SetCookie(w, cookie)
