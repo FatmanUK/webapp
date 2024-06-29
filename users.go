@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 	"gorm.io/gorm"
 	"github.com/glebarez/sqlite" // pure Go?
@@ -117,13 +116,9 @@ func (re *User) Save() {
 }
 
 func (re *User) IsGroupMember(group string) bool {
-	v := strings.Split(re.Groups, ";")
-	for _, g := range v {
-		if g == group {
-			return true
-		}
-	}
-	return false
+	s := (&StringList{}).InitS(re.Groups)
+	re.Groups = s.String()
+	return s.BContainsS(group)
 }
 
 func (re *User) Logout() {
@@ -144,7 +139,9 @@ func (re *User) Login() {
 func (re *User) Create(groups []string) {
 	t := time.Now().UTC()
 	re.Created = &t
-	re.Groups = strings.Join(groups, ";")
+	s := &StringList{}
+	s.Members = groups
+	re.Groups = s.String()
 	userDb.Create(re)
 }
 
